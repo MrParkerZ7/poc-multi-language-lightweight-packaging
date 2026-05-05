@@ -1,0 +1,64 @@
+# Build outputs
+**/target/
+**/build/
+**/dist/
+**/out/
+**/bin/
+**/obj/
+**/.gradle/
+
+# Java
+*.class
+*.jar
+*.war
+hs_err_pid*
+
+# Node
+**/node_modules/
+**/.npm/
+**/npm-debug.log*
+**/yarn-error.log*
+**/.pnpm-store/
+**/package-lock.json.bak
+
+# Python
+**/__pycache__/
+*.py[cod]
+*$py.class
+**/*.egg-info/
+**/.pytest_cache/
+**/.venv/
+**/venv/
+**/env/
+**/build/
+**/dist/
+*.spec
+
+# Go
+**/vendor/
+
+# Rust
+**/Cargo.lock.bak
+
+# .NET
+**/[Bb]in/
+**/[Oo]bj/
+*.user
+*.suo
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+*.sln.docstates
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local artifact measurements
+MEASUREMENTS.local.md
+
+# Temp/disposable per root standard
+🚫*

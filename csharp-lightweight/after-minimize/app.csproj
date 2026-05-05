@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>app</AssemblyName>
+    <RootNamespace>App</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Native AOT: compile to a single, runtime-free, platform-native binary -->
+    <PublishAot>true</PublishAot>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <StripSymbols>true</StripSymbols>
+    <OptimizationPreference>Size</OptimizationPreference>
+    <IlcOptimizationPreference>Size</IlcOptimizationPreference>
+    <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
+  </PropertyGroup>
+
+</Project>

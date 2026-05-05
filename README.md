@@ -1,0 +1,158 @@
+# POC: Multi-Language Lightweight Packaging
+
+A 30-second exec-friendly comparison of how small a **production CLI deployment** can get across the top mainstream programming languages, before vs after applying one well-known minimization technique per language.
+
+---
+
+## TL;DR Headline
+
+| Language | Before | After | Reduction | Runtime needed on host? | Cold-start |
+|----------|-------:|------:|----------:|:------------------------|-----------:|
+| Java / Kotlin (jlink) | 28 MB | 32 MB | — | No (JRE bundled) | ~120 ms |
+| Java / Kotlin (GraalVM native) | 28 MB | **12 MB** | 57% | **No** | **~25 ms** |
+| C# / .NET (AOT trimmed) | 72 MB | **11 MB** | 85% | **No** | **~18 ms** |
+| Python (zipapp) | 84 MB | 1.2 MB | 99% | Yes (Python 3.11+) | ~70 ms |
+| Python (PyInstaller onefile) | 84 MB | **9.8 MB** | 88% | **No** | ~110 ms |
+| Node / TypeScript (esbuild bundle) | 200 MB | **1.5 MB** | 99% | Yes (Node 20+) | ~80 ms |
+| Node / TypeScript (llrt bundle) | 200 MB | 12 MB | 94% | **No** (llrt ~10 MB) | ~30 ms |
+| Go (strip + UPX) | 8 MB | **1.5 MB** | 81% | **No** | ~4 ms |
+| Rust (opt-z + strip + UPX) | 6 MB | **400 KB** | 93% | **No** | ~2 ms |
+
+> Numbers are illustrative target ranges based on the trivial CLI in this POC. Run `pwsh ./build-all.ps1` (or each `build.ps1`) to measure on your machine.
+
+---
+
+## Visual
+
+```
+Before                                       After (best-per-lang)
+─────────────────────────────────────────    ──────────────────────────
+Java       ████████████████████░░░  28 MB   →  ███      12 MB
+C#         ███████████████████████████ 72MB  →  ███      11 MB
+Python     ████████████████████████░ 84 MB   →  ███       9.8 MB
+Node/TS    █████████████████████████ 200MB   →  █         1.5 MB
+Go         ███           8 MB                 →  █         1.5 MB
+Rust       ██            6 MB                 →  ▏         400 KB
+```
+
+---
+
+## What this POC demonstrates
+
+For each language:
+
+1. **`before-minimize/`** — what most teams ship by default (full deps, full runtime, naive packaging).
+2. **`after-minimize/`** — the standard "lightweight prod" technique for that language.
+3. **`after-minimize-no-runtime/`** *(Java, Python, Node only)* — when the language has a separate "no runtime install needed" technique, this folder shows that variant. Lets the headline table compare both stories honestly.
+
+The CLI in every language does **the same trivial thing** (see `_common-spec/CLI_SPEC.md`):
+
+```bash
+$ ./app
+{"hello":"world","language":"<name>","uuid":"<random-v4>","timestamp":"2026-05-05T12:34:56Z"}
+```
+
+So size and cold-start differences are due **only** to packaging, not to functionality.
+
+---
+
+## How to read this for an exec audience
+
+Three takeaways the table makes obvious:
+
+1. **The naive build is misleadingly large** — 200 MB for a "Hello World" Node service is real and common.
+2. **Modern packaging closes the gap** — every mainstream language can ship under 15 MB with one well-known technique.
+3. **"No runtime needed" matters more than raw size** — Java GraalVM native (12 MB, no JVM) is a different product from a 32 MB jlink runtime (no JVM install needed but bundled JRE), and that's a different product from a 28 MB fat JAR (needs JVM on every host). Smaller artifact ≠ better for ops; the runtime column is the operational story.
+
+---
+
+## Folder layout
+
+```
+poc-multi-language-lightweight-packaging/
+├── README.md                              ← this file
+├── _common-spec/
+│   └── CLI_SPEC.md                        ← what the CLI does (same in every language)
+├── java-kotlin-lightweight/
+│   ├── README.md                          ← Java-specific table + commands
+│   ├── before-minimize/                   ← Spring Boot fat JAR
+│   ├── after-minimize/                    ← jlink modular runtime image
+│   └── after-minimize-no-runtime/         ← GraalVM native image
+├── csharp-lightweight/
+│   ├── README.md
+│   ├── before-minimize/                   ← default self-contained
+│   └── after-minimize/                    ← AOT trimmed
+├── python-lightweight/
+│   ├── README.md
+│   ├── before-minimize/                   ← venv + deps
+│   ├── after-minimize/                    ← zipapp (needs Python)
+│   └── after-minimize-no-runtime/         ← PyInstaller onefile
+├── node-lightweight/
+│   ├── README.md
+│   ├── before-minimize/                   ← npm install + tsc
+│   ├── after-minimize/                    ← esbuild bundle (needs Node)
+│   └── after-minimize-no-runtime/         ← esbuild + AWS llrt
+├── go-lightweight/
+│   ├── README.md
+│   ├── before-minimize/                   ← default go build
+│   └── after-minimize/                    ← strip + UPX
+└── rust-lightweight/
+    ├── README.md
+    ├── before-minimize/                   ← default cargo build --release
+    └── after-minimize/                    ← opt-z + strip + UPX
+```
+
+---
+
+## Prerequisites
+
+You only need the toolchains for the languages you want to build — each language is independent.
+
+| Language | Required tools |
+|----------|---------------|
+| Java / Kotlin | JDK 21 (Temurin), Maven 3.9+, GraalVM 21 (only for `no-runtime`) |
+| C# | .NET SDK 8.0+ |
+| Python | Python 3.11+, `pip`, `pyinstaller` (for `no-runtime`) |
+| Node / TypeScript | Node 20+, `bun` or `npm`, AWS `llrt` binary (for `no-runtime`) |
+| Go | Go 1.21+, UPX |
+| Rust | rustup + cargo (stable), UPX |
+
+Optional: Docker — every sub-project has a `Dockerfile` so you can build without installing the toolchain locally.
+
+---
+
+## How to build
+
+Each sub-project has a `build.ps1` (PowerShell, Windows-native) and prints the artifact size + cold-start time at the end:
+
+```powershell
+# Build a single variant
+cd java-kotlin-lightweight/after-minimize
+./build.ps1
+# → Artifact: target/app/bin/app  (32.4 MB)
+# → Cold-start: 118 ms
+
+# Build everything (top-level helper, runs every build.ps1 under each language)
+./build-all.ps1
+```
+
+After a full build, regenerate the headline table:
+
+```powershell
+./measure.ps1 > MEASUREMENTS.md
+```
+
+---
+
+## Status
+
+| Language | Scaffolded | Built locally | Numbers verified |
+|----------|:---------:|:-------------:|:----------------:|
+| Java / Kotlin | ✅ | ⏳ | ⏳ |
+| C# | ✅ | ⏳ | ⏳ |
+| Python | ✅ | ⏳ | ⏳ |
+| Node / TypeScript | ✅ | ⏳ | ⏳ |
+| Go | ✅ | ⏳ | ⏳ |
+| Rust | ✅ | ⏳ | ⏳ |
+
+Numbers in the headline table are **target estimates** until builds are run and `MEASUREMENTS.md` is generated.
