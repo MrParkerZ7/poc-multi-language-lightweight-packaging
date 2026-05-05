@@ -22,18 +22,69 @@ A 30-second exec-friendly comparison of how small a **production CLI deployment*
 
 ---
 
-## Visual
+## Methodology — what's measured
+
+Two distinct sizes per variant, both meaningful for different audiences:
+
+| Measurement | What it counts | Useful for |
+|-------------|---------------|------------|
+| **Whole project on disk** | Total bytes in the variant folder after a full build — source, configs, lockfiles, intermediate build cache (Maven `target/`, .NET `bin/`+`obj/`, Cargo `target/release/`), installed dev deps, and the final artifact. Excludes `.git` and shared module caches (`~/.m2`, `~/go/pkg/mod`, Cargo registry). | Dev-machine / CI storage cost, build-time disk pressure |
+| **Packaged deployment artifact** | Just the file(s) you ship to a production host. The headline-table number. | Deploy time, registry storage, cold-start, host disk |
+
+Per-row definition of "packaged":
+
+- **Java** — the fat JAR / jpackage `app/` folder / native binary
+- **C#** — the `publish/` folder (single-file exe + companion native libs for self-contained; just the exe for AOT)
+- **Python before-minimize** — source + `.venv/` + installed deps **shipped together** — the naive Python deploy shape; there is no separate "package" for naive Python prod
+- **Python after-minimize** — `.pyz` zipapp; **after-minimize-no-runtime** — PyInstaller `.exe`
+- **Node before-minimize** — source + `dist/` + full `node_modules/` **shipped together** — the naive Node deploy shape
+- **Node after-minimize** — single `.mjs` bundle; **after-minimize-no-runtime** — `.mjs` + `llrt` binary (both shipped)
+- **Go / Rust** — the single executable
+
+The Python and Node "before" rows are intentionally measured as source + deps because that's *how teams actually deploy them naively* (rsync the project + run on host). Measuring only source files for those would understate the operational pain this POC exists to surface.
+
+Practical note for AOT-style variants (Java GraalVM, C# AOT, Rust size-tuned): they produce **massive local build caches** but **tiny shipped artifacts**. Build-cost ≠ deploy-cost. Visual A shows the build-machine reality; Visual B shows what hits the wire.
+
+---
+
+## Visual A — Whole project on disk
+
+Total variant folder size after build. Includes build caches — substantial for AOT/native pipelines.
 
 ```
-Before                                       After (best-per-lang)
-─────────────────────────────────────────    ──────────────────────────
-Java       ████████████████████░░░  28 MB   →  ███      12 MB
-C#         ███████████████████████████ 72MB  →  ███      11 MB
-Python     ████████████████████████░ 84 MB   →  ███       9.8 MB
-Node/TS    █████████████████████████ 200MB   →  █         1.5 MB
-Go         ███           8 MB                 →  █         1.5 MB
-Rust       ██            6 MB                 →  ▏         400 KB
+                                  Before (naive)                  After (best-per-lang)
+                                  ─────────────────────────       ─────────────────────────────────
+Java       fat JAR / GraalVM      ████████          ~50 MB    →   ████████████████   ~250 MB *
+C#         self-cont. / AOT       ████████████      ~150 MB   →   ████████████████   ~250 MB *
+Python     venv / PyInstaller     ███████           ~84 MB    →   ████                ~50 MB *
+Node       npm+tsc / esbuild      █████████████████ ~200 MB   →   ███                 ~30 MB
+Go         default / strip+UPX    █                  ~8 MB    →   ▏                  ~1.5 MB
+Rust       default / size profile ████████████████████ ~500MB **→  ████████████████████ ~500 MB **
 ```
+
+  *  AOT/native build caches dominate the disk footprint (linker intermediates, generated native code, cached symbols).
+  ** Cargo `target/release/` accumulates compiled crate artifacts — tens to hundreds of MB regardless of source size. Run `cargo clean` to reclaim.
+
+**Takeaway:** AOT / native compilation has a real local-disk cost. Plan CI runner disk and dev-machine storage accordingly.
+
+---
+
+## Visual B — Packaged deployment artifact
+
+What actually ships to a production host. This is the headline-table number — the operational story.
+
+```
+                                  Before                          After (best-per-lang)
+                                  ─────────────────────────       ─────────────────────────────────
+Java                              ████████████        28 MB    →  █████              12 MB  (GraalVM native)
+C#                                ████████████████████ 72 MB   →  █████              11 MB  (AOT)
+Python                            ████████████████    84 MB    →  ████               9.8 MB (PyInstaller)
+Node/TS                           ████████████████████ 200 MB  →  █                  1.5 MB (esbuild bundle)
+Go                                ██                   8 MB    →  █                  1.5 MB
+Rust                              █                    6 MB    →  ▏                  0.4 MB
+```
+
+**Takeaway:** every mainstream language can ship a production CLI under 15 MB. The most dramatic deltas are in the heavy-by-default languages (Java, C#, Python, Node) where naive deploy is 25 MB–200 MB and optimized deploy is 1–12 MB.
 
 ---
 
