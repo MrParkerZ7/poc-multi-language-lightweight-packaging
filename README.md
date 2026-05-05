@@ -56,6 +56,25 @@ So size and cold-start differences are due **only** to packaging, not to functio
 
 ---
 
+## What this POC is NOT
+
+This POC tackles **per-artifact weight** — how small can *one* deployable get, and does it require a runtime installed on the host?
+
+It does **not** tackle **cross-artifact dependency duplication** — the problem where you deploy 10 microservices and the same shared library lives 10 times across the 10 images. That's a separate operational problem with a separate solution family (Docker layered images, shared base images, externals-at-runtime, registry caching, Spring Boot layered JARs).
+
+The two are **orthogonal** — both can be applied together — but they answer different questions and target different decision-makers:
+
+| Problem | Question | Solution family | Where to read |
+|---------|----------|-----------------|---------------|
+| **This POC: per-artifact lightweight** | "Our single CLI is 200 MB and needs Node installed everywhere — how small can it get?" | Bundling, tree-shaking, AOT compile, stripping, compression | This repo |
+| **Cross-artifact dedup** | "We're shipping the same 50 MB of shared deps across 10 services. How do we stop?" | Docker multi-stage + shared base images, Spring Boot layered JARs, webpack externals + `node_modules` at runtime, pnpm content-addressable storage | Sample monorepo docs: `fat-jar-dependency-duplication.md` (Java/Maven), `bundle-dependency-duplication.md` (Node/Lerna) |
+
+A team typically applies them in sequence: **first** shrink each artifact with this POC's per-language techniques (200 MB → 1.5 MB per service), **then** apply cross-artifact dedup so 10 services share one base image (10 × 40 MB image → 1 × 40 MB base + 10 × 1.5 MB layers).
+
+Picking the **per-artifact technique** is a build-time / language-choice decision (does our team commit to GraalVM? to AOT? to UPX?). Picking the **cross-artifact technique** is an ops / containerization decision (Docker base layering, registry caching strategy). Different stakeholders, different timelines, different RFCs.
+
+---
+
 ## How to read this for an exec audience
 
 Three takeaways the table makes obvious:
