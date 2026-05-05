@@ -2,6 +2,18 @@
 
 Same trivial CLI in two production-deployment shapes.
 
+## The Problem
+
+Rust shares Go's situation: single static binary by default, no runtime installed anywhere. The "before" is already lightweight by Java/Python/Node standards.
+
+The remaining issue is **default release builds optimize for speed, not size**. The linker keeps panic-unwinding machinery, debug symbols, and per-crate compilation units (which limits cross-crate inlining). Default `cargo build --release` produces 4–6 MB binaries even for trivial CLIs.
+
+Where Rust differs from Go is how *much* room exists to shrink. Rust's `Cargo.toml` exposes very granular optimization levers — `opt-level = "z"`, `lto = true`, `codegen-units = 1`, `panic = "abort"`, `strip = true` — that combine to produce binaries 5–10× smaller than the default. That's because Rust monomorphizes generics aggressively (great for speed, bad for size) and the size flags reverse those choices.
+
+For exec audiences this becomes the most dramatic "after" in the table: ~400 KB for the same logic that Python ships at 80 MB. Same operational shape (no runtime, instant start), but at a different order of magnitude on disk and bandwidth.
+
+## The Solution(s)
+
 | Variant | Artifact | Target size | Runtime needed on host? | Cold-start | Technique |
 |---------|----------|------------:|:------------------------|-----------:|-----------|
 | `before-minimize/` | `app.exe` (default `cargo build --release`) | ~4–6 MB | **No** (always) | ~3 ms | Default release build |

@@ -2,6 +2,22 @@
 
 Same trivial CLI in two production-deployment shapes.
 
+## The Problem
+
+Go doesn't have the "needs a runtime installed on the host" problem at all — every `go build` produces a single static binary that runs on a vanilla machine. Most of the pain that Java, C#, Python, and Node face simply doesn't apply.
+
+The remaining issue is **binary size**: Go's runtime, garbage collector, type metadata, and DWARF debug info contribute ~5 MB of overhead even for trivial programs. Default release binaries are 6–8 MB regardless of how much code you actually wrote.
+
+For most teams this is already lighter than every other language's optimized output — Go's "before" is smaller than Java's "after" (jlink). It only matters when:
+
+- Shipping to **extreme scale** — hundreds of services in a Kubernetes cluster, where image size × replicas × regions adds up
+- Distributing to **bandwidth-constrained edges** — CDN edge functions, IoT firmware, embedded systems
+- Cold-start sensitive workloads where binary load time matters at the 10-millisecond level
+
+For those cases, stripping symbols and UPX-compressing brings Go to ~1.5 MB without losing any runtime behavior — same self-contained, same cold-start, just 4–5× smaller on disk.
+
+## The Solution(s)
+
 | Variant | Artifact | Target size | Runtime needed on host? | Cold-start | Technique |
 |---------|----------|------------:|:------------------------|-----------:|-----------|
 | `before-minimize/` | `app.exe` (default `go build`) | ~6–8 MB | **No** (always) | ~5 ms | Default `go build` — already a single static binary |

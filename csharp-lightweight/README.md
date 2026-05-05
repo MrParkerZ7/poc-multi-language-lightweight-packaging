@@ -2,6 +2,16 @@
 
 Same trivial CLI in two production-deployment shapes.
 
+## The Problem
+
+Modern .NET CLIs are typically published "self-contained" so they don't require .NET to be installed on the host. The trade is artifact size — the entire .NET runtime (CLR, JIT, BCL, GC, plus a stripped sub-tree of dependencies) is bundled into the executable, producing 60–80 MB binaries for even trivial apps.
+
+On top of that, cold-start carries JIT compilation overhead: the runtime walks the IL, optimizes hot paths, then runs. For serverless or short-lived CLIs you pay this on every invocation, not once per process.
+
+So C# inherits the same dual-cost shape as Java, just with different numbers — large artifact (because the runtime is always shipped) plus JIT cold-start tax. Native AOT addresses both at the same time: smaller binary (no JIT, no full BCL, dead code trimmed) and instant start (no JIT pause).
+
+## The Solution(s)
+
 | Variant | Artifact | Target size | Runtime needed on host? | Cold-start | Technique |
 |---------|----------|------------:|:------------------------|-----------:|-----------|
 | `before-minimize/` | self-contained .exe + folder | ~72 MB | **No** (full .NET runtime bundled) | ~80 ms | Default `dotnet publish -r win-x64 --self-contained -p:PublishSingleFile=true` |

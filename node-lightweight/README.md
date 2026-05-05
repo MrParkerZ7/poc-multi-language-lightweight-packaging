@@ -2,6 +2,21 @@
 
 Same trivial CLI in three production-deployment shapes.
 
+## The Problem
+
+`node_modules` is famously heavy because npm installs every transitive dependency eagerly — and most teams `npm install` (which keeps dev deps) instead of `npm ci --omit=dev` on the deploy box. A typical TypeScript service ships 150–500 MB to production: the source, the compiled `dist/`, the type definitions, the test framework, the linter, plus the full transitive dependency tree of every runtime lib.
+
+On top of that, **Node must be installed on every host**. The "self-contained" packaging options that exist for Node — `bun build --compile`, `node --experimental-sea`, `pkg` — all bundle the *full* Node/Bun runtime, producing 50–60 MB single binaries. They solve the runtime-install problem but make the size problem worse, not better.
+
+The two distinct lightweight techniques attack different parts of this:
+
+- **esbuild bundle + minify** is the "smallest possible artifact" answer — tree-shake to a single 1–2 MB `.mjs`, ship just that file. Host still needs Node, but the artifact is dramatic.
+- **AWS `llrt`** is the "no runtime install needed" answer — a Rust-based ~10 MB JS-subset runtime that runs the bundle directly. Total deploy ~12 MB self-contained, matching Java GraalVM and C# AOT in operational shape.
+
+The trade is API coverage: llrt implements a subset of Node APIs (most stdlib, basic fs/http/crypto, AWS SDK). Pure JS code and modern serverless workloads run fine; legacy Node code that uses native modules or worker threads may not.
+
+## The Solution(s)
+
 | Variant | Artifact | Target size | Runtime needed on host? | Cold-start | Technique |
 |---------|----------|------------:|:------------------------|-----------:|-----------|
 | `before-minimize/` | source + `node_modules/` + `dist/` (folder) | ~150–200 MB | **Yes** (Node 20+) | ~120 ms | Default `npm install && tsc` deployment — ship everything |

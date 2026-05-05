@@ -2,6 +2,19 @@
 
 Same trivial CLI in three production-deployment shapes.
 
+## The Problem
+
+JVM apps ship two distinct production costs:
+
+1. **The JVM must be installed on every deployment host** (or bundled with the app, ~150 MB JDK). This is operational overhead — version management, security patching, and CVE coordination across the entire fleet.
+2. **Spring Boot apps include reflection-based auto-configuration scanning**, producing 25–30 MB fat JARs even for trivial CLIs. Cold-start is ~1+ seconds because the JVM warms up, loads classes, then runs Spring's bean initialization graph.
+
+For exec-friendly cloud workloads (Lambda, edge functions, serverless containers, ephemeral CLIs), both costs hurt at the same time: the artifact is too big to deploy fast, *and* the cold-start blows the latency budget.
+
+The Java row is dramatic in the headline table because the *naive* enterprise build (Spring Boot fat JAR) is the maximum-pain shape — and the gap to the optimized shape (GraalVM native at ~12 MB, ~25 ms cold-start, no JVM needed) shows what's possible when both costs are attacked at once.
+
+## The Solution(s)
+
 | Variant | Artifact | Target size | Runtime needed on host? | Cold-start | Technique |
 |---------|----------|------------:|:------------------------|-----------:|-----------|
 | `before-minimize/` | Spring Boot fat JAR | ~28 MB | **Yes** (JDK/JRE 21) | ~1.2 s | Default `spring-boot-maven-plugin repackage` |

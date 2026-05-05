@@ -2,6 +2,21 @@
 
 Same trivial CLI in three production-deployment shapes.
 
+## The Problem
+
+Python deployments ship the source tree + a venv + every transitive pip dependency. A typical enterprise service has 30–50 dependencies; `requests` alone pulls `urllib3`, `certifi`, `charset-normalizer`, `idna` — about 15 MB. Total deployed size of 100–300 MB is the norm, not the exception.
+
+On top of that, **Python itself must be installed on every host** with the right minor version (3.11 vs 3.12 matters for some libs). Migrating a service across Python versions means coordinating with every machine that runs it.
+
+The two distinct lightweight techniques attack different parts of this problem:
+
+- **zipapp** removes the *unused dependency weight* — ship a single archive containing only the code that's actually used. But Python is still required on the host.
+- **PyInstaller** removes the *Python install requirement* — bundle a stripped Python interpreter into the artifact itself. Larger binary, but runs on a vanilla machine with nothing pre-installed.
+
+Both are legitimately deployed in production. The exec choice is "do we already provision Python on every host?" — if yes, zipapp; if no, PyInstaller.
+
+## The Solution(s)
+
 | Variant | Artifact | Target size | Runtime needed on host? | Cold-start | Technique |
 |---------|----------|------------:|:------------------------|-----------:|-----------|
 | `before-minimize/` | source + venv + deps (folder) | ~84 MB | **Yes** (Python 3.11+) | ~70 ms | Default `pip install -r requirements.txt` into a venv, ship the whole thing |
