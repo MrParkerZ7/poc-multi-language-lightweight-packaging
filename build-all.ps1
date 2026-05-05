@@ -5,21 +5,21 @@ $ErrorActionPreference = "Continue"
 $root = $PSScriptRoot
 
 $variants = @(
-    @{ Lang = "java"   ; Path = "java-kotlin-lightweight/before-minimize"           },
-    @{ Lang = "java"   ; Path = "java-kotlin-lightweight/after-minimize"            },
-    @{ Lang = "java"   ; Path = "java-kotlin-lightweight/after-minimize-no-runtime" },
-    @{ Lang = "csharp" ; Path = "csharp-lightweight/before-minimize"                },
-    @{ Lang = "csharp" ; Path = "csharp-lightweight/after-minimize"                 },
-    @{ Lang = "python" ; Path = "python-lightweight/before-minimize"                },
-    @{ Lang = "python" ; Path = "python-lightweight/after-minimize"                 },
-    @{ Lang = "python" ; Path = "python-lightweight/after-minimize-no-runtime"      },
-    @{ Lang = "node"   ; Path = "node-lightweight/before-minimize"                  },
-    @{ Lang = "node"   ; Path = "node-lightweight/after-minimize"                   },
-    @{ Lang = "node"   ; Path = "node-lightweight/after-minimize-no-runtime"        },
-    @{ Lang = "go"     ; Path = "go-lightweight/before-minimize"                    },
-    @{ Lang = "go"     ; Path = "go-lightweight/after-minimize"                     },
-    @{ Lang = "rust"   ; Path = "rust-lightweight/before-minimize"                  },
-    @{ Lang = "rust"   ; Path = "rust-lightweight/after-minimize"                   }
+    @{ Lang = "java"   ; Path = "java-kotlin/spring-boot-fat-jar-before"  },
+    @{ Lang = "java"   ; Path = "java-kotlin/jlink-after"                 },
+    @{ Lang = "java"   ; Path = "java-kotlin/graalvm-native-after"        },
+    @{ Lang = "csharp" ; Path = "csharp/self-contained-before"            },
+    @{ Lang = "csharp" ; Path = "csharp/aot-after"                        },
+    @{ Lang = "python" ; Path = "python/venv-deps-before"                 },
+    @{ Lang = "python" ; Path = "python/zipapp-after"                     },
+    @{ Lang = "python" ; Path = "python/pyinstaller-after"                },
+    @{ Lang = "node"   ; Path = "node/npm-tsc-before"                     },
+    @{ Lang = "node"   ; Path = "node/esbuild-after"                      },
+    @{ Lang = "node"   ; Path = "node/esbuild-llrt-after"                 },
+    @{ Lang = "go"     ; Path = "go/default-build-before"                 },
+    @{ Lang = "go"     ; Path = "go/strip-upx-after"                      },
+    @{ Lang = "rust"   ; Path = "rust/default-release-before"             },
+    @{ Lang = "rust"   ; Path = "rust/size-profile-upx-after"             }
 )
 
 Write-Host ""

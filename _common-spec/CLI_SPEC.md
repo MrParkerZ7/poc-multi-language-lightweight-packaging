@@ -17,7 +17,7 @@ $ ./app
 {"hello":"world","language":"java","uuid":"7f3c2e91-4a8b-4c6d-9e1a-2b5f7c8d3e9a","timestamp":"2026-05-05T12:34:56Z"}
 ```
 
-## Required dependencies (forces real "weight" into the before-minimize side)
+## Required dependencies (forces real "weight" into the naive-baseline side)
 
 | Concern | Use this (per language) |
 |---------|------------------------|
@@ -25,9 +25,9 @@ $ ./app
 | UUID v4 generation | Standard UUID lib (java.util.UUID / System.Guid / uuid / crypto.randomUUID / google/uuid / uuid crate) |
 | ISO-8601 timestamp | Standard time lib |
 
-For "before-minimize" Java specifically, use **Spring Boot** to add realistic enterprise weight (~25 MB fat JAR for trivial CLI is the typical "before" most teams encounter).
+For Java's `spring-boot-fat-jar-before/` specifically, use **Spring Boot** to add realistic enterprise weight (~25 MB fat JAR for trivial CLI is the typical naive deployment most teams encounter).
 
-For all other "before-minimize", just deploy the way most teams naively do: include the whole project tree + full dep install + the language's default packaging.
+For every other naive-baseline folder (`*-before/`), just deploy the way most teams naively do: include the whole project tree + full dep install + the language's default packaging.
 
 ## Field rules
 

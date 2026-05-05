@@ -4,21 +4,21 @@
 $root = $PSScriptRoot
 
 $variants = @(
-    @{ Lang = "Java/Kotlin (Spring Boot fat JAR)"          ; Artifact = "java-kotlin-lightweight/before-minimize/target/app.jar"           ; Run = "java -jar `"<artifact>`"" },
-    @{ Lang = "Java/Kotlin (jlink runtime)"                 ; Artifact = "java-kotlin-lightweight/after-minimize/target/app/bin/app"        ; Run = "`"<artifact>`""           },
-    @{ Lang = "Java/Kotlin (GraalVM native)"                ; Artifact = "java-kotlin-lightweight/after-minimize-no-runtime/target/app.exe"; Run = "`"<artifact>`""           },
-    @{ Lang = "C# (.NET self-contained)"                    ; Artifact = "csharp-lightweight/before-minimize/bin/Release/net8.0/win-x64/publish/app.exe" ; Run = "`"<artifact>`"" },
-    @{ Lang = "C# (AOT trimmed)"                            ; Artifact = "csharp-lightweight/after-minimize/bin/Release/net8.0/win-x64/publish/app.exe"  ; Run = "`"<artifact>`"" },
-    @{ Lang = "Python (venv + deps)"                        ; Artifact = "python-lightweight/before-minimize/.venv"                         ; Run = "python -m app"           },
-    @{ Lang = "Python (zipapp)"                             ; Artifact = "python-lightweight/after-minimize/dist/app.pyz"                   ; Run = "python `"<artifact>`""    },
-    @{ Lang = "Python (PyInstaller onefile)"                ; Artifact = "python-lightweight/after-minimize-no-runtime/dist/app.exe"        ; Run = "`"<artifact>`""           },
-    @{ Lang = "Node/TS (full project + node_modules)"       ; Artifact = "node-lightweight/before-minimize/node_modules"                    ; Run = "node dist/main.js"        },
-    @{ Lang = "Node/TS (esbuild bundle)"                    ; Artifact = "node-lightweight/after-minimize/dist/app.mjs"                     ; Run = "node `"<artifact>`""      },
-    @{ Lang = "Node/TS (llrt bundle)"                       ; Artifact = "node-lightweight/after-minimize-no-runtime/dist/app.mjs"          ; Run = "llrt `"<artifact>`""      },
-    @{ Lang = "Go (default)"                                ; Artifact = "go-lightweight/before-minimize/app.exe"                           ; Run = "`"<artifact>`""           },
-    @{ Lang = "Go (strip + UPX)"                            ; Artifact = "go-lightweight/after-minimize/app.exe"                            ; Run = "`"<artifact>`""           },
-    @{ Lang = "Rust (default)"                              ; Artifact = "rust-lightweight/before-minimize/target/release/app.exe"          ; Run = "`"<artifact>`""           },
-    @{ Lang = "Rust (opt-z + strip + UPX)"                  ; Artifact = "rust-lightweight/after-minimize/target/release/app.exe"           ; Run = "`"<artifact>`""           }
+    @{ Lang = "Java/Kotlin (Spring Boot fat JAR)"           ; Artifact = "java-kotlin/spring-boot-fat-jar-before/target/app.jar"             ; Run = "java -jar `"<artifact>`"" },
+    @{ Lang = "Java/Kotlin (jlink runtime)"                 ; Artifact = "java-kotlin/jlink-after/target/app/bin/app"                       ; Run = "`"<artifact>`""           },
+    @{ Lang = "Java/Kotlin (GraalVM native)"                ; Artifact = "java-kotlin/graalvm-native-after/target/app.exe"                  ; Run = "`"<artifact>`""           },
+    @{ Lang = "C# (.NET self-contained)"                    ; Artifact = "csharp/self-contained-before/publish/app.exe"                     ; Run = "`"<artifact>`""           },
+    @{ Lang = "C# (AOT trimmed)"                            ; Artifact = "csharp/aot-after/publish/app.exe"                                 ; Run = "`"<artifact>`""           },
+    @{ Lang = "Python (venv + deps)"                        ; Artifact = "python/venv-deps-before/.venv"                                    ; Run = "python -m app"            },
+    @{ Lang = "Python (zipapp)"                             ; Artifact = "python/zipapp-after/dist/app.pyz"                                 ; Run = "python `"<artifact>`""    },
+    @{ Lang = "Python (PyInstaller onefile)"                ; Artifact = "python/pyinstaller-after/dist/app.exe"                            ; Run = "`"<artifact>`""           },
+    @{ Lang = "Node/TS (full project + node_modules)"       ; Artifact = "node/npm-tsc-before/node_modules"                                 ; Run = "node dist/main.js"        },
+    @{ Lang = "Node/TS (esbuild bundle)"                    ; Artifact = "node/esbuild-after/dist/app.mjs"                                  ; Run = "node `"<artifact>`""      },
+    @{ Lang = "Node/TS (llrt bundle)"                       ; Artifact = "node/esbuild-llrt-after/dist/app.mjs"                             ; Run = "llrt `"<artifact>`""      },
+    @{ Lang = "Go (default)"                                ; Artifact = "go/default-build-before/app.exe"                                  ; Run = "`"<artifact>`""           },
+    @{ Lang = "Go (strip + UPX)"                            ; Artifact = "go/strip-upx-after/app.exe"                                       ; Run = "`"<artifact>`""           },
+    @{ Lang = "Rust (default)"                              ; Artifact = "rust/default-release-before/target/release/app.exe"               ; Run = "`"<artifact>`""           },
+    @{ Lang = "Rust (opt-z + strip + UPX)"                  ; Artifact = "rust/size-profile-upx-after/target/release/app.exe"               ; Run = "`"<artifact>`""           }
 )
 
 function Get-Size {
