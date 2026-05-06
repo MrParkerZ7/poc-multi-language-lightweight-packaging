@@ -19,11 +19,11 @@ Both are legitimately deployed in production. The exec choice is "do we already 
 
 | Variant | Artifact | Target size | Runtime needed on host? | Cold-start | Technique |
 |---------|----------|------------:|:------------------------|-----------:|-----------|
-| `before-venv-deps/` | source + venv + deps (folder) | ~84 MB | **Yes** (Python 3.11+) | ~70 ms | Default `pip install -r requirements.txt` into a venv, ship the whole thing |
-| `after-zipapp/` | `app.pyz` (zipapp) | **~10 KB**–1.2 MB | **Yes** (Python 3.11+) | ~70 ms | `python -m zipapp` — single archive, stdlib-only or vendored deps |
-| `after-pyinstaller/` | `app.exe` (PyInstaller) | **~9.8 MB** | **No** | ~110 ms | `pyinstaller --onefile` — bundles a stripped Python interpreter |
-| `after-nuitka/` | `app.exe` (Nuitka onefile) | **~8 MB** | **No** | ~50 ms | `nuitka --onefile` — actually compiles Python → C → native binary; smaller and faster than PyInstaller |
-| `after-pex/` | `app.pex` (PEX) | ~1 MB | **Yes** (Python 3.x) | ~80 ms | Twitter/Pants's "zipapp on steroids" — single .pex file with vendored deps |
+| `0-before-venv-deps/` | source + venv + deps (folder) | ~84 MB | **Yes** (Python 3.11+) | ~70 ms | Default `pip install -r requirements.txt` into a venv, ship the whole thing |
+| `1-after-zipapp/` | `app.pyz` (zipapp) | **~10 KB**–1.2 MB | **Yes** (Python 3.11+) | ~70 ms | `python -m zipapp` — single archive, stdlib-only or vendored deps |
+| `1-after-pyinstaller/` | `app.exe` (PyInstaller) | **~9.8 MB** | **No** | ~110 ms | `pyinstaller --onefile` — bundles a stripped Python interpreter |
+| `1-after-nuitka/` | `app.exe` (Nuitka onefile) | **~8 MB** | **No** | ~50 ms | `nuitka --onefile` — actually compiles Python → C → native binary; smaller and faster than PyInstaller |
+| `1-after-pex/` | `app.pex` (PEX) | ~1 MB | **Yes** (Python 3.x) | ~80 ms | Twitter/Pants's "zipapp on steroids" — single .pex file with vendored deps |
 
 ## Why three variants?
 
@@ -38,32 +38,32 @@ The before/after spread is dramatic: `pip install` of typical enterprise deps (r
 
 ```powershell
 # Show the typical naive deploy — venv + deps
-cd before-venv-deps
+cd 0-before-venv-deps
 ./build.ps1
 
 # zipapp (smallest artifact, needs Python)
-cd after-zipapp
+cd 1-after-zipapp
 ./build.ps1
 
 # PyInstaller onefile (no Python needed on host)
-cd after-pyinstaller
+cd 1-after-pyinstaller
 ./build.ps1
 
 # Nuitka onefile (Python -> C -> native, smaller + faster than PyInstaller)
-cd after-nuitka
+cd 1-after-nuitka
 ./build.ps1
 
 # PEX (zipapp+, single .pex file)
-cd after-pex
+cd 1-after-pex
 ./build.ps1
 ```
 
 ## Prerequisites
 
 - Python 3.11 or later (with `pip` and `venv`)
-- For `after-pyinstaller/`: `pip install pyinstaller`
-- For `after-nuitka/`: `pip install nuitka` (build script auto-installs if missing)
-- For `after-pex/`: `pip install pex` (build script auto-installs if missing)
+- For `1-after-pyinstaller/`: `pip install pyinstaller`
+- For `1-after-nuitka/`: `pip install nuitka` (build script auto-installs if missing)
+- For `1-after-pex/`: `pip install pex` (build script auto-installs if missing)
 
 ## Trade-offs (for the exec)
 

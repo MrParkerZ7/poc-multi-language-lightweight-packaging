@@ -8,32 +8,32 @@ $ErrorActionPreference = "Continue"
 $root = $PSScriptRoot
 
 $variants = @(
-    @{ Path = "java-kotlin/before-spring-boot-fat-jar" ; Tag = "poc-lightweight/java-spring-boot-fat-jar"  },
-    @{ Path = "java-kotlin/after-jlink"                ; Tag = "poc-lightweight/java-jlink"                },
-    @{ Path = "java-kotlin/after-graalvm-native"       ; Tag = "poc-lightweight/java-graalvm-native"       },
-    @{ Path = "java-kotlin/after-spring-native"        ; Tag = "poc-lightweight/java-spring-native"        },
-    @{ Path = "java-kotlin/after-quarkus-native"       ; Tag = "poc-lightweight/java-quarkus-native"       },
-    @{ Path = "csharp/before-self-contained"           ; Tag = "poc-lightweight/csharp-self-contained"     },
-    @{ Path = "csharp/after-trimmed"                   ; Tag = "poc-lightweight/csharp-trimmed"            },
-    @{ Path = "csharp/after-r2r"                       ; Tag = "poc-lightweight/csharp-r2r"                },
-    @{ Path = "csharp/after-aot"                       ; Tag = "poc-lightweight/csharp-aot"                },
-    @{ Path = "python/before-venv-deps"                ; Tag = "poc-lightweight/python-venv-deps"          },
-    @{ Path = "python/after-zipapp"                    ; Tag = "poc-lightweight/python-zipapp"             },
-    @{ Path = "python/after-pyinstaller"               ; Tag = "poc-lightweight/python-pyinstaller"        },
-    @{ Path = "python/after-nuitka"                    ; Tag = "poc-lightweight/python-nuitka"             },
-    @{ Path = "python/after-pex"                       ; Tag = "poc-lightweight/python-pex"                },
-    @{ Path = "node/before-npm-tsc"                    ; Tag = "poc-lightweight/node-npm-tsc"              },
-    @{ Path = "node/after-esbuild"                     ; Tag = "poc-lightweight/node-esbuild"              },
-    @{ Path = "node/after-esbuild-llrt"                ; Tag = "poc-lightweight/node-esbuild-llrt"         },
-    @{ Path = "node/after-webpack"                     ; Tag = "poc-lightweight/node-webpack"              },
-    @{ Path = "node/after-ncc"                         ; Tag = "poc-lightweight/node-ncc"                  },
-    @{ Path = "node/after-bun-compile"                 ; Tag = "poc-lightweight/node-bun-compile"          },
-    @{ Path = "go/before-default-build"                ; Tag = "poc-lightweight/go-default-build"          },
-    @{ Path = "go/after-strip-upx"                     ; Tag = "poc-lightweight/go-strip-upx"              },
-    @{ Path = "go/after-tinygo"                        ; Tag = "poc-lightweight/go-tinygo"                 },
-    @{ Path = "rust/before-default-release"            ; Tag = "poc-lightweight/rust-default-release"      },
-    @{ Path = "rust/after-size-profile-upx"            ; Tag = "poc-lightweight/rust-size-profile-upx"     },
-    @{ Path = "rust/after-musl-static"                 ; Tag = "poc-lightweight/rust-musl-static"          }
+    @{ Path = "java-kotlin/0-before-spring-boot-fat-jar" ; Tag = "poc-lightweight/java-spring-boot-fat-jar"  },
+    @{ Path = "java-kotlin/1-after-jlink"                ; Tag = "poc-lightweight/java-jlink"                },
+    @{ Path = "java-kotlin/1-after-graalvm-native"       ; Tag = "poc-lightweight/java-graalvm-native"       },
+    @{ Path = "java-kotlin/1-after-spring-native"        ; Tag = "poc-lightweight/java-spring-native"        },
+    @{ Path = "java-kotlin/1-after-quarkus-native"       ; Tag = "poc-lightweight/java-quarkus-native"       },
+    @{ Path = "csharp/0-before-self-contained"           ; Tag = "poc-lightweight/csharp-self-contained"     },
+    @{ Path = "csharp/1-after-trimmed"                   ; Tag = "poc-lightweight/csharp-trimmed"            },
+    @{ Path = "csharp/1-after-r2r"                       ; Tag = "poc-lightweight/csharp-r2r"                },
+    @{ Path = "csharp/1-after-aot"                       ; Tag = "poc-lightweight/csharp-aot"                },
+    @{ Path = "python/0-before-venv-deps"                ; Tag = "poc-lightweight/python-venv-deps"          },
+    @{ Path = "python/1-after-zipapp"                    ; Tag = "poc-lightweight/python-zipapp"             },
+    @{ Path = "python/1-after-pyinstaller"               ; Tag = "poc-lightweight/python-pyinstaller"        },
+    @{ Path = "python/1-after-nuitka"                    ; Tag = "poc-lightweight/python-nuitka"             },
+    @{ Path = "python/1-after-pex"                       ; Tag = "poc-lightweight/python-pex"                },
+    @{ Path = "node/0-before-npm-tsc"                    ; Tag = "poc-lightweight/node-npm-tsc"              },
+    @{ Path = "node/1-after-esbuild"                     ; Tag = "poc-lightweight/node-esbuild"              },
+    @{ Path = "node/1-after-esbuild-llrt"                ; Tag = "poc-lightweight/node-esbuild-llrt"         },
+    @{ Path = "node/1-after-webpack"                     ; Tag = "poc-lightweight/node-webpack"              },
+    @{ Path = "node/1-after-ncc"                         ; Tag = "poc-lightweight/node-ncc"                  },
+    @{ Path = "node/1-after-bun-compile"                 ; Tag = "poc-lightweight/node-bun-compile"          },
+    @{ Path = "go/0-before-default-build"                ; Tag = "poc-lightweight/go-default-build"          },
+    @{ Path = "go/1-after-strip-upx"                     ; Tag = "poc-lightweight/go-strip-upx"              },
+    @{ Path = "go/1-after-tinygo"                        ; Tag = "poc-lightweight/go-tinygo"                 },
+    @{ Path = "rust/0-before-default-release"            ; Tag = "poc-lightweight/rust-default-release"      },
+    @{ Path = "rust/1-after-size-profile-upx"            ; Tag = "poc-lightweight/rust-size-profile-upx"     },
+    @{ Path = "rust/1-after-musl-static"                 ; Tag = "poc-lightweight/rust-musl-static"          }
 )
 
 # Verify Docker is available
@@ -62,7 +62,6 @@ foreach ($v in $variants) {
         $results += [pscustomobject]@{ Variant = $v.Path ; Tag = $v.Tag ; Size = "BUILD FAILED" }
         continue
     }
-    # Get image size
     $bytes = (docker image inspect $v.Tag --format '{{.Size}}') -as [long]
     $sizeMB = "{0:N1} MB" -f ($bytes / 1MB)
     $results += [pscustomobject]@{ Variant = $v.Path ; Tag = $v.Tag ; Size = $sizeMB }

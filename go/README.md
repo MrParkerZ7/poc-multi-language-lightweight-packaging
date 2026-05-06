@@ -20,9 +20,9 @@ For those cases, stripping symbols and UPX-compressing brings Go to ~1.5 MB with
 
 | Variant | Artifact | Target size | Runtime needed on host? | Cold-start | Technique |
 |---------|----------|------------:|:------------------------|-----------:|-----------|
-| `before-default-build/` | `app.exe` (default `go build`) | ~6–8 MB | **No** (always) | ~5 ms | Default `go build` — already a single static binary |
-| `after-strip-upx/` | `app.exe` (stripped + UPX-compressed) | **~1.5 MB** | **No** | ~4 ms | `go build -ldflags="-s -w" -trimpath` + `upx --best --lzma` |
-| `after-tinygo/` | `app.exe` (TinyGo compiler) | **~0.5 MB** | **No** | ~4 ms | `tinygo build -opt=z` — alternative compiler, much smaller; trade-off: smaller stdlib coverage |
+| `0-before-default-build/` | `app.exe` (default `go build`) | ~6–8 MB | **No** (always) | ~5 ms | Default `go build` — already a single static binary |
+| `1-after-strip-upx/` | `app.exe` (stripped + UPX-compressed) | **~1.5 MB** | **No** | ~4 ms | `go build -ldflags="-s -w" -trimpath` + `upx --best --lzma` |
+| `1-after-tinygo/` | `app.exe` (TinyGo compiler) | **~0.5 MB** | **No** | ~4 ms | `tinygo build -opt=z` — alternative compiler, much smaller; trade-off: smaller stdlib coverage |
 
 ## Why is "before" already lightweight?
 
@@ -38,23 +38,23 @@ For exec audiences, the Go row is the "no minimization needed and it's already s
 
 ```powershell
 # Default (naive baseline — already lightweight)
-cd before-default-build
+cd 0-before-default-build
 ./build.ps1
 
 # Stripped + UPX
-cd after-strip-upx
+cd 1-after-strip-upx
 ./build.ps1
 
 # TinyGo compiler (much smaller, but smaller stdlib coverage)
-cd after-tinygo
+cd 1-after-tinygo
 ./build.ps1   # requires tinygo: https://tinygo.org/
 ```
 
 ## Prerequisites
 
 - Go 1.21 or later
-- For `after-strip-upx/`: UPX (https://upx.github.io/). On Windows: `choco install upx` or download the binary and put it on PATH.
-- For `after-tinygo/`: TinyGo (https://tinygo.org/getting-started/install/). Note: `encoding/json` and a few stdlib packages have limited support in TinyGo — verify the trivial CLI builds before relying on it for richer code.
+- For `1-after-strip-upx/`: UPX (https://upx.github.io/). On Windows: `choco install upx` or download the binary and put it on PATH.
+- For `1-after-tinygo/`: TinyGo (https://tinygo.org/getting-started/install/). Note: `encoding/json` and a few stdlib packages have limited support in TinyGo — verify the trivial CLI builds before relying on it for richer code.
 
 ## Trade-offs (for the exec)
 

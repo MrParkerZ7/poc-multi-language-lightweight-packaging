@@ -16,9 +16,9 @@ For exec audiences this becomes the most dramatic "after" in the table: ~400 KB 
 
 | Variant | Artifact | Target size | Runtime needed on host? | Cold-start | Technique |
 |---------|----------|------------:|:------------------------|-----------:|-----------|
-| `before-default-release/` | `app.exe` (default `cargo build --release`) | ~4–6 MB | **No** (always) | ~3 ms | Default release build |
-| `after-size-profile-upx/` | `app.exe` (opt-z + LTO + strip + UPX) | **~400 KB** | **No** | ~2 ms | `opt-level="z"`, `lto=true`, `strip=true`, `panic="abort"`, `codegen-units=1`, then UPX |
-| `after-musl-static/` | `app` (Linux musl static, no UPX) | ~4 MB | **No** | ~3 ms | `cargo build --target x86_64-unknown-linux-musl` — fully-static Linux binary, ready for `FROM scratch` Docker (no AV-flag risk like UPX) |
+| `0-before-default-release/` | `app.exe` (default `cargo build --release`) | ~4–6 MB | **No** (always) | ~3 ms | Default release build |
+| `1-after-size-profile-upx/` | `app.exe` (opt-z + LTO + strip + UPX) | **~400 KB** | **No** | ~2 ms | `opt-level="z"`, `lto=true`, `strip=true`, `panic="abort"`, `codegen-units=1`, then UPX |
+| `1-after-musl-static/` | `app` (Linux musl static, no UPX) | ~4 MB | **No** | ~3 ms | `cargo build --target x86_64-unknown-linux-musl` — fully-static Linux binary, ready for `FROM scratch` Docker (no AV-flag risk like UPX) |
 
 ## Why is "before" already lightweight?
 
@@ -37,23 +37,23 @@ Combined, these can turn a 5 MB default release into a ~300–500 KB binary. For
 
 ```powershell
 # Default release (naive baseline — already lightweight)
-cd before-default-release
+cd 0-before-default-release
 ./build.ps1
 
 # Aggressive size optimization + UPX
-cd after-size-profile-upx
+cd 1-after-size-profile-upx
 ./build.ps1
 
 # musl static (Linux ELF, no UPX, FROM scratch ready)
-cd after-musl-static
+cd 1-after-musl-static
 ./build.ps1   # requires `rustup target add x86_64-unknown-linux-musl` (auto-runs)
 ```
 
 ## Prerequisites
 
 - rustup + cargo (stable channel)
-- For `after-size-profile-upx/`: UPX (https://upx.github.io/)
-- For `after-musl-static/`: `rustup target add x86_64-unknown-linux-musl` (auto-installs in build script). Cross-compiles a Linux ELF binary even on Windows/macOS — but the artifact only runs on Linux.
+- For `1-after-size-profile-upx/`: UPX (https://upx.github.io/)
+- For `1-after-musl-static/`: `rustup target add x86_64-unknown-linux-musl` (auto-installs in build script). Cross-compiles a Linux ELF binary even on Windows/macOS — but the artifact only runs on Linux.
 
 ## Trade-offs (for the exec)
 

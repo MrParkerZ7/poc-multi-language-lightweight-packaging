@@ -14,10 +14,10 @@ So C# inherits the same dual-cost shape as Java, just with different numbers —
 
 | Variant | Artifact | Target size | Runtime needed on host? | Cold-start | Technique |
 |---------|----------|------------:|:------------------------|-----------:|-----------|
-| `before-self-contained/` | self-contained .exe + folder | ~72 MB | **No** (full .NET runtime bundled) | ~80 ms | Default `dotnet publish -r win-x64 --self-contained -p:PublishSingleFile=true` |
-| `after-trimmed/` | trimmed self-contained | ~25 MB | **No** | ~60 ms | `PublishTrimmed=true` — drops unused IL, keeps JIT runtime; full reflection still works on referenced types |
-| `after-r2r/` | ReadyToRun precompiled | ~75 MB | **No** | ~50 ms | `PublishReadyToRun=true` — precompiles IL→native at publish; faster cold-start, slightly larger |
-| `after-aot/` | Native AOT single .exe | **~11 MB** | **No** | **~18 ms** | `PublishAot=true` (.NET 8+) — full AOT compile, smallest + fastest |
+| `0-before-self-contained/` | self-contained .exe + folder | ~72 MB | **No** (full .NET runtime bundled) | ~80 ms | Default `dotnet publish -r win-x64 --self-contained -p:PublishSingleFile=true` |
+| `1-after-trimmed/` | trimmed self-contained | ~25 MB | **No** | ~60 ms | `PublishTrimmed=true` — drops unused IL, keeps JIT runtime; full reflection still works on referenced types |
+| `1-after-r2r/` | ReadyToRun precompiled | ~75 MB | **No** | ~50 ms | `PublishReadyToRun=true` — precompiles IL→native at publish; faster cold-start, slightly larger |
+| `1-after-aot/` | Native AOT single .exe | **~11 MB** | **No** | **~18 ms** | `PublishAot=true` (.NET 8+) — full AOT compile, smallest + fastest |
 
 ## Why no separate "no runtime" variant for C#?
 
@@ -32,19 +32,19 @@ For most modern CLI/microservice workloads, AOT is the right answer in 2026. For
 
 ```powershell
 # Self-contained (naive baseline)
-cd before-self-contained
+cd 0-before-self-contained
 ./build.ps1
 
 # PublishTrimmed (no AOT) — middle ground
-cd after-trimmed
+cd 1-after-trimmed
 ./build.ps1
 
 # ReadyToRun precompiled (faster cold-start, slightly larger)
-cd after-r2r
+cd 1-after-r2r
 ./build.ps1
 
 # Native AOT (~6× smaller, ~4× faster cold-start)
-cd after-aot
+cd 1-after-aot
 ./build.ps1
 ```
 

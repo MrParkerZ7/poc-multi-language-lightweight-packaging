@@ -25,7 +25,7 @@ $ ./app
 | UUID v4 generation | Standard UUID lib (java.util.UUID / System.Guid / uuid / crypto.randomUUID / google/uuid / uuid crate) |
 | ISO-8601 timestamp | Standard time lib |
 
-For Java's `before-spring-boot-fat-jar/` specifically, use **Spring Boot** to add realistic enterprise weight (~25 MB fat JAR for trivial CLI is the typical naive deployment most teams encounter).
+For Java's `0-before-spring-boot-fat-jar/` specifically, use **Spring Boot** to add realistic enterprise weight (~25 MB fat JAR for trivial CLI is the typical naive deployment most teams encounter).
 
 For every other naive-baseline folder (`before-*/`), just deploy the way most teams naively do: include the whole project tree + full dep install + the language's default packaging.
 

@@ -54,10 +54,10 @@ Per-row definition of "packaged":
 
 - **Java** — the fat JAR / jpackage `app/` folder / native binary
 - **C#** — the `publish/` folder (single-file exe + companion native libs for self-contained; just the exe for AOT)
-- **Python `before-venv-deps/`** — source + `.venv/` + installed deps **shipped together** — the naive Python deploy shape; there is no separate "package" for naive Python prod
-- **Python `after-zipapp/`** — `.pyz` zipapp; **`after-pyinstaller/`** — PyInstaller `.exe`
-- **Node `before-npm-tsc/`** — source + `dist/` + full `node_modules/` **shipped together** — the naive Node deploy shape
-- **Node `after-esbuild/`** — single `.mjs` bundle; **`after-esbuild-llrt/`** — `.mjs` + `llrt` binary (both shipped)
+- **Python `0-before-venv-deps/`** — source + `.venv/` + installed deps **shipped together** — the naive Python deploy shape; there is no separate "package" for naive Python prod
+- **Python `1-after-zipapp/`** — `.pyz` zipapp; **`1-after-pyinstaller/`** — PyInstaller `.exe`
+- **Node `0-before-npm-tsc/`** — source + `dist/` + full `node_modules/` **shipped together** — the naive Node deploy shape
+- **Node `1-after-esbuild/`** — single `.mjs` bundle; **`1-after-esbuild-llrt/`** — `.mjs` + `llrt` binary (both shipped)
 - **Go / Rust** — the single executable
 
 The Python and Node "before" rows are intentionally measured as source + deps because that's *how teams actually deploy them naively* (rsync the project + run on host). Measuring only source files for those would understate the operational pain this POC exists to surface.
@@ -125,10 +125,10 @@ Rust       opt-z + UPX            ▏                ~0.5 MB   (FROM scratch)
 
 Each language folder contains one or more **`<before|after>-<solution>/`** sub-folders, where:
 
-1. **`before-<solution>/`** — the *naive default* deployment for that language (e.g., `before-spring-boot-fat-jar/`, `before-npm-tsc/`). What most teams ship without thinking about size.
-2. **`after-<solution>/`** — an *optimized* deployment using a specific technique (e.g., `after-graalvm-native/`, `after-esbuild/`). Each language has 1–4 of these, named after the technique applied.
+1. **`before-<solution>/`** — the *naive default* deployment for that language (e.g., `0-before-spring-boot-fat-jar/`, `0-before-npm-tsc/`). What most teams ship without thinking about size.
+2. **`after-<solution>/`** — an *optimized* deployment using a specific technique (e.g., `1-after-graalvm-native/`, `1-after-esbuild/`). Each language has 1–4 of these, named after the technique applied.
 
-The folder name tells you the technique at a glance — no need to open the README to know what `csharp/after-aot/` or `node/after-esbuild-llrt/` is. The `before-` / `after-` prefix also groups all naive baselines together when listed alphabetically.
+The folder name tells you the technique at a glance — no need to open the README to know what `csharp/1-after-aot/` or `node/1-after-esbuild-llrt/` is. The `before-` / `after-` prefix also groups all naive baselines together when listed alphabetically.
 
 Every variant folder includes a **`Dockerfile`** alongside the source + build script — multi-stage build that compiles inside Docker (no local toolchain needed) and ships the smallest reasonable image (`FROM scratch` where possible, alpine/distroless otherwise).
 
@@ -180,43 +180,43 @@ poc-multi-language-lightweight-packaging/
 ├── _common-spec/
 │   └── CLI_SPEC.md                        ← what the CLI does (same in every language)
 ├── java-kotlin/
-│   ├── README.md                          ← Java-specific table + commands
-│   ├── before-spring-boot-fat-jar/        ← Spring Boot fat JAR (naive baseline)
-│   ├── after-jlink/                       ← jlink modular runtime image
-│   ├── after-graalvm-native/              ← GraalVM native (plain Java)
-│   ├── after-spring-native/               ← Spring Boot 3 + GraalVM
-│   └── after-quarkus-native/              ← Quarkus native-first framework
+│   ├── README.md                            ← Java-specific table + commands
+│   ├── 0-before-spring-boot-fat-jar/        ← Spring Boot fat JAR (naive baseline)
+│   ├── 1-after-jlink/                       ← jlink modular runtime image
+│   ├── 1-after-graalvm-native/              ← GraalVM native (plain Java)
+│   ├── 1-after-spring-native/               ← Spring Boot 3 + GraalVM
+│   └── 1-after-quarkus-native/              ← Quarkus native-first framework
 ├── csharp/
 │   ├── README.md
-│   ├── before-self-contained/             ← default self-contained (naive baseline)
-│   ├── after-trimmed/                     ← PublishTrimmed (no AOT)
-│   ├── after-r2r/                         ← ReadyToRun precompiled
-│   └── after-aot/                         ← Native AOT trimmed
+│   ├── 0-before-self-contained/             ← default self-contained (naive baseline)
+│   ├── 1-after-trimmed/                     ← PublishTrimmed (no AOT)
+│   ├── 1-after-r2r/                         ← ReadyToRun precompiled
+│   └── 1-after-aot/                         ← Native AOT trimmed
 ├── python/
 │   ├── README.md
-│   ├── before-venv-deps/                  ← venv + deps (naive baseline)
-│   ├── after-zipapp/                      ← zipapp (needs Python)
-│   ├── after-pyinstaller/                 ← PyInstaller onefile
-│   ├── after-nuitka/                      ← Nuitka (Python → C → native)
-│   └── after-pex/                         ← PEX (zipapp+)
+│   ├── 0-before-venv-deps/                  ← venv + deps (naive baseline)
+│   ├── 1-after-zipapp/                      ← zipapp (needs Python)
+│   ├── 1-after-pyinstaller/                 ← PyInstaller onefile
+│   ├── 1-after-nuitka/                      ← Nuitka (Python → C → native)
+│   └── 1-after-pex/                         ← PEX (zipapp+)
 ├── node/
 │   ├── README.md
-│   ├── before-npm-tsc/                    ← npm install + tsc (naive baseline)
-│   ├── after-esbuild/                     ← esbuild bundle (needs Node)
-│   ├── after-esbuild-llrt/                ← esbuild + AWS llrt
-│   ├── after-webpack/                     ← webpack + Terser
-│   ├── after-ncc/                         ← @vercel/ncc
-│   └── after-bun-compile/                 ← bun --compile single binary
+│   ├── 0-before-npm-tsc/                    ← npm install + tsc (naive baseline)
+│   ├── 1-after-esbuild/                     ← esbuild bundle (needs Node)
+│   ├── 1-after-esbuild-llrt/                ← esbuild + AWS llrt
+│   ├── 1-after-webpack/                     ← webpack + Terser
+│   ├── 1-after-ncc/                         ← @vercel/ncc
+│   └── 1-after-bun-compile/                 ← bun --compile single binary
 ├── go/
 │   ├── README.md
-│   ├── before-default-build/              ← default go build (naive baseline)
-│   ├── after-strip-upx/                   ← strip + UPX
-│   └── after-tinygo/                      ← TinyGo compiler (smaller stdlib)
+│   ├── 0-before-default-build/              ← default go build (naive baseline)
+│   ├── 1-after-strip-upx/                   ← strip + UPX
+│   └── 1-after-tinygo/                      ← TinyGo compiler (smaller stdlib)
 └── rust/
     ├── README.md
-    ├── before-default-release/            ← default cargo build --release (naive baseline)
-    ├── after-size-profile-upx/            ← opt-z + LTO + strip + UPX
-    └── after-musl-static/                 ← musl static (Linux, FROM scratch ready)
+    ├── 0-before-default-release/            ← default cargo build --release (naive baseline)
+    ├── 1-after-size-profile-upx/            ← opt-z + LTO + strip + UPX
+    └── 1-after-musl-static/                 ← musl static (Linux, FROM scratch ready)
 ```
 
 ---
@@ -227,24 +227,24 @@ You only need the toolchains for the languages and variants you want to build �
 
 | Language | Variant | Required local tool |
 |----------|---------|--------------------|
-| Java / Kotlin | `before-spring-boot-fat-jar`, `after-jlink` | JDK 21 (Temurin), Maven 3.9+ |
-| Java / Kotlin | `after-graalvm-native` | + GraalVM 21 with `native-image` (`gu install native-image`) |
-| Java / Kotlin | `after-spring-native` | + GraalVM 21 (Spring Boot 3 has built-in native plugin) |
-| Java / Kotlin | `after-quarkus-native` | + GraalVM 21 |
-| C# | `before-self-contained`, `after-trimmed`, `after-r2r` | .NET SDK 8.0+ |
-| C# | `after-aot` | + VS 2022 C++ workload (Windows) or clang/gcc (Linux/macOS) |
-| Python | `before-venv-deps` | Python 3.11+ with `pip` and `venv` |
-| Python | `after-zipapp` | Python 3.11+ |
-| Python | `after-pyinstaller` | Python 3.11+, auto-installs `pyinstaller` |
-| Python | `after-nuitka` | Python 3.11+, auto-installs `nuitka` (needs C compiler) |
-| Python | `after-pex` | Python 3.11+, auto-installs `pex` |
-| Node / TS | `before-npm-tsc`, `after-esbuild`, `after-webpack`, `after-ncc` | Node 20+, npm |
-| Node / TS | `after-esbuild-llrt` | + auto-downloads AWS `llrt` from GitHub release |
-| Node / TS | `after-bun-compile` | + `bun` (https://bun.sh/) |
-| Go | `before-default-build`, `after-strip-upx` | Go 1.21+ (UPX for the `after-strip-upx` variant) |
-| Go | `after-tinygo` | + TinyGo (https://tinygo.org/) |
-| Rust | `before-default-release`, `after-size-profile-upx` | rustup + cargo (UPX for `after-size-profile-upx`) |
-| Rust | `after-musl-static` | + `rustup target add x86_64-unknown-linux-musl` (auto-runs in build script) |
+| Java / Kotlin | `0-before-spring-boot-fat-jar`, `after-jlink` | JDK 21 (Temurin), Maven 3.9+ |
+| Java / Kotlin | `1-after-graalvm-native` | + GraalVM 21 with `native-image` (`gu install native-image`) |
+| Java / Kotlin | `1-after-spring-native` | + GraalVM 21 (Spring Boot 3 has built-in native plugin) |
+| Java / Kotlin | `1-after-quarkus-native` | + GraalVM 21 |
+| C# | `0-before-self-contained`, `1-after-trimmed`, `1-after-r2r` | .NET SDK 8.0+ |
+| C# | `1-after-aot` | + VS 2022 C++ workload (Windows) or clang/gcc (Linux/macOS) |
+| Python | `0-before-venv-deps` | Python 3.11+ with `pip` and `venv` |
+| Python | `1-after-zipapp` | Python 3.11+ |
+| Python | `1-after-pyinstaller` | Python 3.11+, auto-installs `pyinstaller` |
+| Python | `1-after-nuitka` | Python 3.11+, auto-installs `nuitka` (needs C compiler) |
+| Python | `1-after-pex` | Python 3.11+, auto-installs `pex` |
+| Node / TS | `0-before-npm-tsc`, `1-after-esbuild`, `1-after-webpack`, `1-after-ncc` | Node 20+, npm |
+| Node / TS | `1-after-esbuild-llrt` | + auto-downloads AWS `llrt` from GitHub release |
+| Node / TS | `1-after-bun-compile` | + `bun` (https://bun.sh/) |
+| Go | `0-before-default-build`, `1-after-strip-upx` | Go 1.21+ (UPX for the `1-after-strip-upx` variant) |
+| Go | `1-after-tinygo` | + TinyGo (https://tinygo.org/) |
+| Rust | `0-before-default-release`, `1-after-size-profile-upx` | rustup + cargo (UPX for `1-after-size-profile-upx`) |
+| Rust | `1-after-musl-static` | + `rustup target add x86_64-unknown-linux-musl` (auto-runs in build script) |
 
 UPX install: `choco install upx` (Windows), `apt install upx-ucl` (Debian/Ubuntu), `brew install upx` (macOS).
 
@@ -277,7 +277,7 @@ Every variant ships with a multi-stage `Dockerfile` so you can produce a contain
 
 ```powershell
 # Build one variant's image
-docker build -t poc-lightweight/rust-musl-static rust/after-musl-static
+docker build -t poc-lightweight/rust-musl-static rust/1-after-musl-static
 
 # Build all variants (tags each as poc-lightweight/<lang>-<variant>:latest)
 ./docker-build-all.ps1
