@@ -20,6 +20,7 @@ For exec audiences this becomes the most dramatic "after" in the table: ~400 KB 
 | `1-after-size-profile-upx/` | `app.exe` (opt-z + LTO + strip + UPX) | **~400 KB** | **No** | ~2 ms | `opt-level="z"`, `lto=true`, `strip=true`, `panic="abort"`, `codegen-units=1`, then UPX |
 | `1-after-musl-static/` | `app` (Linux musl static, no UPX) | ~4 MB | **No** | ~3 ms | `cargo build --target x86_64-unknown-linux-musl` — fully-static Linux binary, ready for `FROM scratch` Docker (no AV-flag risk like UPX) |
 | `2-amalgamate/` | musl + every Cargo size knob + UPX | **~0.3 MB** | **No** | ~5 ms | musl target + `opt-level=z` + `lto=fat` + `codegen-units=1` + `panic=abort` + `strip=symbols` + `overflow-checks=false` + UPX (stacked). The smallest reasonable Rust deployment. |
+| `3-best/` | nightly + build-std + immediate-abort + every above flag + UPX-LZMA | **~0.08 MB** | **No** | ~6 ms | Adds nightly-only `-Z build-std=std,panic_abort` + `panic_immediate_abort` + `optimize_for_size` rebuild of std, plus `-Zlocation-detail=none`, `-Zfmt-debug=none`. **Trade**: nightly Rust required; panic = silent abort with no message. |
 
 ## Why is "before" already lightweight?
 
@@ -52,6 +53,10 @@ cd 1-after-musl-static
 # 2-amalgamate: musl + every Cargo size knob + UPX + scratch
 cd 2-amalgamate
 ./build.ps1
+
+# 3-best: nightly + build-std + immediate-abort + UPX-LZMA (smallest possible)
+cd 3-best
+./build.ps1   # auto-installs nightly + rust-src + musl target via rust-toolchain.toml
 ```
 
 ## Prerequisites

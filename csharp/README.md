@@ -19,6 +19,7 @@ So C# inherits the same dual-cost shape as Java, just with different numbers —
 | `1-after-r2r/` | ReadyToRun precompiled | ~75 MB | **No** | ~50 ms | `PublishReadyToRun=true` — precompiles IL→native at publish; faster cold-start, slightly larger |
 | `1-after-aot/` | Native AOT single .exe | **~11 MB** | **No** | **~18 ms** | `PublishAot=true` (.NET 8+) — full AOT compile, smallest + fastest |
 | `2-amalgamate/` | Native AOT + every safe knob | **~9 MB** | **No** | **~15 ms** | AOT + `TrimMode=full` + `IlcDisableReflection` + `OptimizationPreference=Size` + EventSource/Metrics/Debugger off + `IlcFoldIdenticalMethodBodies` (stacked). UPX skipped — known incompatibility with .NET AOT loader. |
+| `3-best/` | AOT + every above flag + extra trim + stack-trace data off | **~5 MB** | **No** | **~12 ms** | Adds `IlcGenerateStackTraceData=false` + `StackTraceSupport=false` + `BuiltInComInteropSupport=false` + `NullabilityInfoContextSupport=false` + `_AggressiveAttributeTrimming=true`. **Trade**: no stack traces on crash; uses internal MSBuild flags pinned to .NET 8. |
 
 ## Why no separate "no runtime" variant for C#?
 
@@ -50,6 +51,10 @@ cd 1-after-aot
 
 # 2-amalgamate: every safe knob stacked (AOT + full trim + reflection off + size optimization)
 cd 2-amalgamate
+./build.ps1
+
+# 3-best: every 2-amalgamate flag + extra trim + stack-trace off (smallest possible)
+cd 3-best
 ./build.ps1
 ```
 

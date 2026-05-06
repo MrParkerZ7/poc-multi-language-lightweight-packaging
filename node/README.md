@@ -1,6 +1,6 @@
 # Node / TypeScript — Lightweight Packaging
 
-Same trivial CLI in six production-deployment shapes.
+Same trivial CLI in seven production-deployment shapes.
 
 ## The Problem
 
@@ -26,6 +26,7 @@ The trade is API coverage: llrt implements a subset of Node APIs (most stdlib, b
 | `1-after-ncc/` | `dist/index.js` (@vercel/ncc) | ~2.5 MB | **Yes** (Node 20+) | ~85 ms | `@vercel/ncc` — zero-config Node bundler, sane defaults |
 | `1-after-bun-compile/` | `dist/app.exe` (bun --compile) | ~60 MB | **No** (bun runtime bundled) | ~30 ms | `bun build --compile` — single binary with bun runtime; Node-API compatible (where llrt is a subset) |
 | `2-amalgamate/` | esbuild max-minify + UPX-compressed llrt | **~6 MB** | **No** | **~25 ms** | esbuild bundle (max minify, no Node-only APIs) + AWS llrt + UPX-compress llrt itself + scratch container (stacked). |
+| `3-best/` | esbuild + QuickJS-NG (~1 MB engine) + UPX-LZMA | **~2 MB** | **No** | **~12 ms** | Switches runtime from llrt to QuickJS-NG (pure-ECMAScript engine, ~10× smaller). Source rewritten to avoid `crypto.randomUUID` / Node APIs. **Trade**: QuickJS-NG is pure ECMAScript only — no `node:fs`, no `node:crypto`, no AWS SDK; UUIDv4 falls back to `Math.random` (not crypto-secure). |
 
 ## Why three variants?
 
@@ -67,6 +68,10 @@ cd 1-after-bun-compile
 
 # 2-amalgamate: esbuild max-minify + UPX-compressed llrt + scratch
 cd 2-amalgamate
+./build.ps1
+
+# 3-best: esbuild + QuickJS-NG + UPX-LZMA + scratch (smallest possible)
+cd 3-best
 ./build.ps1
 ```
 

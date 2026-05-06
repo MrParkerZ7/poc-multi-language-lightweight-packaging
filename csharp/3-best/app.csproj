@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>app</AssemblyName>
+    <RootNamespace>App</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- 3-best: every 2-amalgamate flag PLUS the next tier of size cuts -->
+    <PublishAot>true</PublishAot>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+
+    <!-- Carried over from 2-amalgamate -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <StripSymbols>true</StripSymbols>
+    <OptimizationPreference>Size</OptimizationPreference>
+    <IlcOptimizationPreference>Size</IlcOptimizationPreference>
+    <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
+    <IlcDisableReflection>true</IlcDisableReflection>
+    <DebuggerSupport>false</DebuggerSupport>
+    <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
+    <EventSourceSupport>false</EventSourceSupport>
+    <HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
+    <MetricsSupport>false</MetricsSupport>
+    <UseSystemResourceKeys>true</UseSystemResourceKeys>
+    <TrimMode>full</TrimMode>
+
+    <!-- 3-best additions: drop everything else not strictly needed for stdout JSON -->
+    <IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
+    <IlcDisableUnhandledExceptionExperience>true</IlcDisableUnhandledExceptionExperience>
+    <StackTraceSupport>false</StackTraceSupport>
+    <BuiltInComInteropSupport>false</BuiltInComInteropSupport>
+    <CustomResourceTypesSupport>false</CustomResourceTypesSupport>
+    <EnableCppCLIHostActivation>false</EnableCppCLIHostActivation>
+    <NullabilityInfoContextSupport>false</NullabilityInfoContextSupport>
+    <AutoreleasePoolSupport>false</AutoreleasePoolSupport>
+    <UseNativeHttpHandler>false</UseNativeHttpHandler>
+    <UseWindowsThreadPool>false</UseWindowsThreadPool>
+    <_AggressiveAttributeTrimming>true</_AggressiveAttributeTrimming>
+  </PropertyGroup>
+
+  <!-- Tell linker to strip rooted attributes from the runtime descriptors XML -->
+  <ItemGroup>
+    <RuntimeHostConfigurationOption Include="System.Reflection.NullabilityInfoContext.IsSupported" Value="false" Trim="true" />
+    <RuntimeHostConfigurationOption Include="System.Resources.ResourceManager.AllowCustomResourceTypes" Value="false" Trim="true" />
+    <RuntimeHostConfigurationOption Include="System.Diagnostics.Tracing.EventSource.IsSupported" Value="false" Trim="true" />
+  </ItemGroup>
+
+</Project>

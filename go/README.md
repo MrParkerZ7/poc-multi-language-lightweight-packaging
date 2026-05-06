@@ -24,6 +24,7 @@ For those cases, stripping symbols and UPX-compressing brings Go to ~1.5 MB with
 | `1-after-strip-upx/` | `app.exe` (stripped + UPX-compressed) | **~1.5 MB** | **No** | ~4 ms | `go build -ldflags="-s -w" -trimpath` + `upx --best --lzma` |
 | `1-after-tinygo/` | `app.exe` (TinyGo compiler) | **~0.5 MB** | **No** | ~4 ms | `tinygo build -opt=z` — alternative compiler, much smaller; trade-off: smaller stdlib coverage |
 | `2-amalgamate/` | TinyGo + opt=z + UPX | **~0.2 MB** | **No** | ~5 ms | TinyGo with `-opt=z -no-debug` then UPX `--best --lzma`, ships from `FROM scratch`. Note: UPX adds ~5–20 ms decompression to cold-start. |
+| `3-best/` | TinyGo + leaking GC + no scheduler + panic-trap + UPX-LZMA | **~0.12 MB** | **No** | ~6 ms | Adds `-gc=leaking` (no GC, leak everything) + `-scheduler=none` (single-threaded) + `-panic=trap` (silent crash). **Trade**: single-shot CLI only — must exit cleanly to release memory; no goroutines; crashes silently. |
 
 ## Why is "before" already lightweight?
 
@@ -52,6 +53,10 @@ cd 1-after-tinygo
 
 # 2-amalgamate: TinyGo + opt=z + UPX + scratch
 cd 2-amalgamate
+./build.ps1
+
+# 3-best: TinyGo + leaking GC + no scheduler + panic-trap + UPX-LZMA (smallest possible)
+cd 3-best
 ./build.ps1
 ```
 

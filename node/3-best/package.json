@@ -1,0 +1,13 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/main.ts --bundle --minify --tree-shaking=true --legal-comments=none --platform=neutral --target=es2023 --format=esm --outfile=dist/app.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "esbuild": "^0.20.2",
+    "typescript": "^5.4.3"
+  }
+}

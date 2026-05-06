@@ -1,6 +1,6 @@
 # Python — Lightweight Packaging
 
-Same trivial CLI in five production-deployment shapes.
+Same trivial CLI in six production-deployment shapes.
 
 ## The Problem
 
@@ -25,6 +25,7 @@ Both are legitimately deployed in production. The exec choice is "do we already 
 | `1-after-nuitka/` | `app.exe` (Nuitka onefile) | **~8 MB** | **No** | ~50 ms | `nuitka --onefile` — actually compiles Python → C → native binary; smaller and faster than PyInstaller |
 | `1-after-pex/` | `app.pex` (PEX) | ~1 MB | **Yes** (Python 3.x) | ~80 ms | Twitter/Pants's "zipapp on steroids" — single .pex file with vendored deps |
 | `2-amalgamate/` | Nuitka onefile + LTO + every size flag | **~7 MB** | **No** | **~45 ms** | `nuitka --onefile --lto=yes --no-pyi-file --remove-output` (stacked). UPX skipped — Nuitka onefile uses self-extraction; UPX can break it. |
+| `3-best/` | PyOxidizer + memory-only modules + stripped CPython + UPX-LZMA | **~4 MB** | **No** | **~25 ms** | Switches foundation to PyOxidizer (embeds CPython in a Rust binary, loads modules from RAM — no self-extraction). Adds `optimize_level=2`, drops site/user-site/env, and applies UPX-LZMA on Linux ELF. **Trade**: PyOxidizer build is finicky vs. Nuitka; C-extension wheels need explicit handling. |
 
 ## Why three variants?
 
@@ -61,6 +62,10 @@ cd 1-after-pex
 # 2-amalgamate: Nuitka with LTO + every size flag stacked
 cd 2-amalgamate
 ./build.ps1
+
+# 3-best: PyOxidizer + memory-only modules + UPX-LZMA (smallest possible)
+cd 3-best
+./build.ps1   # first run installs PyOxidizer via cargo install
 ```
 
 ## Prerequisites

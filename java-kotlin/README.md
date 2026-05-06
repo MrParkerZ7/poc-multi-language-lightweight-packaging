@@ -1,6 +1,6 @@
 # Java / Kotlin — Lightweight Packaging
 
-Same trivial CLI in five production-deployment shapes.
+Same trivial CLI in seven production-deployment shapes.
 
 ## The Problem
 
@@ -23,6 +23,7 @@ The Java row is dramatic in the headline table because the *naive* enterprise bu
 | `1-after-spring-native/` | Spring Boot 3 + GraalVM native | ~60 MB | **No** | ~35 ms | Spring Boot 3 with native profile — keeps Spring DI/auto-config but compiles to single binary |
 | `1-after-quarkus-native/` | Quarkus native (single binary) | ~50 MB | **No** | **~20 ms** | Quarkus native-first JVM framework — fastest cold-start of the five |
 | `2-amalgamate/` | GraalVM native + every safe size knob | **~10 MB** | **No** | **~20 ms** | Plain Java + Jackson + GraalVM native + `-Os` + `--gc=serial` + `--initialize-at-build-time` + `Optimize=2` (stacked size flags). UPX skipped — known incompatibility with native-image relocations. |
+| `3-best/` | GraalVM + every above flag + epsilon GC + UPX-LZMA | **~6 MB** | **No** | ~25 ms | Adds `--gc=epsilon` (no GC) + `-R:MaxHeapSize=8m` + `-H:-IncludeMethodData` + `--strict-image-heap` + `-H:+RemoveSaturatedTypeFlows` + `--enable-monitoring=` + UPX-LZMA on Linux ELF. **Trade**: no GC = single-shot only; no stack traces; UPX may flag on Windows AV. |
 
 ## Why three variants?
 
@@ -58,6 +59,10 @@ cd 1-after-quarkus-native
 
 # 2-amalgamate: every safe knob stacked (GraalVM + size flags + scratch container)
 cd 2-amalgamate
+./build.ps1
+
+# 3-best: 2-amalgamate + epsilon GC + UPX-LZMA (smallest possible)
+cd 3-best
 ./build.ps1
 ```
 

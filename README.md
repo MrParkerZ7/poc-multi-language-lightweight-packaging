@@ -1,6 +1,6 @@
 # POC: Multi-Language Lightweight Packaging
 
-A 30-second exec-friendly comparison of how small a **production CLI deployment** can get across the top mainstream programming languages — covering 32 variants across 6 languages, organized into three tiers (`0-before-*` naive baseline, `1-after-*` individual technique, `2-amalgamate` every-knob-stacked). Both **artifact size** and **container image size** measured per variant. Every variant ships its own multi-stage `Dockerfile` so you can produce real numbers without installing toolchains locally.
+A 30-second exec-friendly comparison of how small a **production CLI deployment** can get across the top mainstream programming languages — covering 38 variants across 6 languages, organized into four tiers (`0-before-*` naive baseline, `1-after-*` individual technique, `2-amalgamate` every-safe-knob-stacked, `3-best` smallest-possible-with-trade-offs). Both **artifact size** and **container image size** measured per variant. Every variant ships its own multi-stage `Dockerfile` so you can produce real numbers without installing toolchains locally.
 
 ---
 
@@ -14,17 +14,20 @@ A 30-second exec-friendly comparison of how small a **production CLI deployment*
 | Java / Kotlin (Spring Native) | 28 MB | 60 MB | ~70 MB (debian-slim) | **No** | ~35 ms |
 | Java / Kotlin (Quarkus native) | 28 MB | 50 MB | ~60 MB (debian-slim) | **No** | **~20 ms** |
 | **Java / Kotlin (2-amalgamate)** | 28 MB | **~10 MB** | **~12 MB** (debian-slim) | **No** | **~20 ms** |
+| **Java / Kotlin (3-best — epsilon GC + UPX)** | 28 MB | **~6 MB** | **~6 MB** (FROM scratch) | **No** | ~25 ms |
 | C# / .NET (self-contained — naive) | 72 MB | — | ~80 MB (alpine runtime-deps) | **No** | ~80 ms |
 | C# / .NET (PublishTrimmed) | 72 MB | 25 MB | ~35 MB (alpine runtime-deps) | **No** | ~60 ms |
 | C# / .NET (ReadyToRun) | 72 MB | 75 MB | ~85 MB (alpine runtime-deps) | **No** | ~50 ms |
 | C# / .NET (AOT) | 72 MB | **11 MB** | **~15 MB** (alpine runtime-deps) | **No** | **~18 ms** |
 | **C# / .NET (2-amalgamate)** | 72 MB | **~9 MB** | **~13 MB** (alpine runtime-deps) | **No** | **~15 ms** |
+| **C# / .NET (3-best — max-trim + no-stack-trace)** | 72 MB | **~5 MB** | **~9 MB** (alpine runtime-deps) | **No** | **~12 ms** |
 | Python (venv + deps — naive) | 84 MB | — | ~150 MB (python:3.11-slim) | Yes (Python) | ~70 ms |
 | Python (zipapp) | 84 MB | 1.2 MB | ~50 MB (python:3.11-alpine) | Yes (Python 3.11+) | ~70 ms |
 | Python (PyInstaller) | 84 MB | 9.8 MB | ~80 MB (debian-slim + glibc) | **No** | ~110 ms |
 | Python (Nuitka) | 84 MB | **8 MB** | ~80 MB (debian-slim + glibc) | **No** | ~50 ms |
 | Python (PEX) | 84 MB | 1 MB | ~50 MB (python:3.11-alpine) | Yes (Python 3.x) | ~80 ms |
 | **Python (2-amalgamate)** | 84 MB | **~7 MB** | **~10 MB** (debian-slim) | **No** | **~45 ms** |
+| **Python (3-best — PyOxidizer + memory-only modules)** | 84 MB | **~4 MB** | **~5 MB** (debian-slim) | **No** | **~25 ms** |
 | Node / TypeScript (npm + tsc — naive) | 200 MB | — | ~250 MB (node:20-alpine + node_modules) | Yes (Node) | ~120 ms |
 | Node / TypeScript (esbuild) | 200 MB | **1.5 MB** | ~45 MB (node:20-alpine) | Yes (Node 20+) | ~80 ms |
 | Node / TypeScript (esbuild + llrt) | 200 MB | 12 MB | **~12 MB** (debian-slim) | **No** | ~30 ms |
@@ -32,14 +35,17 @@ A 30-second exec-friendly comparison of how small a **production CLI deployment*
 | Node / TypeScript (@vercel/ncc) | 200 MB | 2.5 MB | ~45 MB (node:20-alpine) | Yes (Node 20+) | ~85 ms |
 | Node / TypeScript (bun --compile) | 200 MB | 60 MB | ~70 MB (debian-slim) | **No** | ~30 ms |
 | **Node / TypeScript (2-amalgamate)** | 200 MB | **~6 MB** | **~7 MB** (debian-slim) | **No** | **~25 ms** |
+| **Node / TypeScript (3-best — QuickJS-NG)** | 200 MB | **~2 MB** | **~2 MB** (FROM scratch) | **No** | **~12 ms** |
 | Go (default) | 8 MB | — | **~10 MB** (FROM scratch) | **No** | ~5 ms |
 | Go (strip + UPX) | 8 MB | **1.5 MB** | **~2 MB** (FROM scratch) | **No** | ~4 ms |
 | Go (TinyGo) | 8 MB | **0.5 MB** | **~0.6 MB** (FROM scratch) | **No** | ~4 ms |
 | **Go (2-amalgamate)** | 8 MB | **~0.2 MB** | **~0.3 MB** (FROM scratch) | **No** | ~5 ms |
+| **Go (3-best — TinyGo + leaking GC + no scheduler)** | 8 MB | **~0.12 MB** | **~0.13 MB** (FROM scratch) | **No** | ~6 ms |
 | Rust (default) | 6 MB | — | ~7 MB (FROM scratch) | **No** | ~3 ms |
 | Rust (opt-z + UPX) | 6 MB | **400 KB** | **~0.5 MB** (FROM scratch) | **No** | ~2 ms |
 | Rust (musl static) | 6 MB | 4 MB | ~4 MB (FROM scratch) | **No** | ~3 ms |
 | **Rust (2-amalgamate)** | 6 MB | **~0.3 MB** | **~0.3 MB** (FROM scratch) | **No** | ~5 ms |
+| **Rust (3-best — nightly + build-std + immediate-abort)** | 6 MB | **~0.08 MB** | **~0.09 MB** (FROM scratch) | **No** | ~6 ms |
 
 > Numbers are illustrative target ranges based on the trivial CLI in this POC. Run `pwsh ./build-all.ps1` (or each `build.ps1`) for artifact sizes; `pwsh ./docker-build-all.ps1` for container images.
 
@@ -95,9 +101,9 @@ Rust       default / size profile ███████████████�
 
 ---
 
-## Visual B — Packaged deployment artifact (all 32 variants)
+## Visual B — Packaged deployment artifact (all 38 variants)
 
-What actually ships to a production host. Each language uses its own scale (noted next to language) — within a language, bar lengths are proportional. The `← best` marker calls out the lower-bound variant per language.
+What actually ships to a production host. Each language uses its own scale (noted next to language) — within a language, bar lengths are proportional. The `← best` marker calls out the lower-bound variant per language (always `3-best`).
 
 ### Java / Kotlin   (scale: 1 char ≈ 1.5 MB)
 
@@ -107,7 +113,8 @@ What actually ships to a production host. Each language uses its own scale (note
 1-after-graalvm-native        ████████                                  12 MB
 1-after-spring-native         ████████████████████████████████████████  60 MB
 1-after-quarkus-native        █████████████████████████████████         50 MB
-2-amalgamate                  ███████                                   10 MB  ← best
+2-amalgamate                  ███████                                   10 MB
+3-best                        ████                                      6 MB   ← best (epsilon GC + UPX)
 ```
 
 ### C# / .NET   (scale: 1 char ≈ 1.9 MB)
@@ -117,7 +124,8 @@ What actually ships to a production host. Each language uses its own scale (note
 1-after-trimmed               █████████████                             25 MB
 1-after-r2r                   ████████████████████████████████████████  75 MB
 1-after-aot                   ██████                                    11 MB
-2-amalgamate                  █████                                     9 MB   ← best
+2-amalgamate                  █████                                     9 MB
+3-best                        ███                                       5 MB   ← best (max-trim + no-stack-trace)
 ```
 
 ### Python   (scale: 1 char ≈ 2.1 MB)
@@ -128,7 +136,8 @@ What actually ships to a production host. Each language uses its own scale (note
 1-after-pyinstaller           █████                                     9.8 MB
 1-after-nuitka                ████                                      8 MB
 1-after-pex                   ▏                                         1 MB   (needs Python on host)
-2-amalgamate                  ███                                       7 MB   ← best (no runtime needed)
+2-amalgamate                  ███                                       7 MB
+3-best                        ██                                        4 MB   ← best (PyOxidizer + memory-only)
 ```
 
 ### Node / TypeScript   (scale: 1 char ≈ 5 MB)
@@ -140,7 +149,8 @@ What actually ships to a production host. Each language uses its own scale (note
 1-after-webpack               ▏                                         2 MB   (needs Node on host)
 1-after-ncc                   ▏                                         2.5 MB (needs Node on host)
 1-after-bun-compile           ████████████                              60 MB
-2-amalgamate                  █                                         6 MB   ← best (no runtime needed)
+2-amalgamate                  █                                         6 MB
+3-best                        ▏                                         2 MB   ← best (QuickJS-NG runtime)
 ```
 
 ### Go   (scale: 1 char ≈ 0.2 MB)
@@ -149,7 +159,8 @@ What actually ships to a production host. Each language uses its own scale (note
 0-before-default-build        ████████████████████████████████████████  8 MB
 1-after-strip-upx             ████████                                  1.5 MB
 1-after-tinygo                ██                                        0.5 MB
-2-amalgamate                  █                                         0.2 MB ← best
+2-amalgamate                  █                                         0.2 MB
+3-best                        ▏                                         0.12 MB ← best (leaking GC + no scheduler)
 ```
 
 ### Rust   (scale: 1 char ≈ 0.15 MB)
@@ -158,14 +169,15 @@ What actually ships to a production host. Each language uses its own scale (note
 0-before-default-release      ████████████████████████████████████████  6 MB
 1-after-size-profile-upx      ███                                       0.4 MB
 1-after-musl-static           ███████████████████████████               4 MB
-2-amalgamate                  ██                                        0.3 MB ← best
+2-amalgamate                  ██                                        0.3 MB
+3-best                        ▏                                         0.08 MB ← best (build-std + immediate-abort)
 ```
 
-**Takeaway:** every mainstream language can ship a production CLI under 10 MB once optimized. The dramatic deltas are in heavy-by-default languages (Java fat JAR 28 → 10 MB; C# self-contained 72 → 9 MB; Python venv 84 → 7 MB; Node npm-tsc 200 → 6 MB). Go and Rust drop into the **kilobyte range** with their amalgamates (0.2 MB and 0.3 MB respectively) — a literal four-orders-of-magnitude gap from Node's naive baseline.
+**Takeaway:** every mainstream language can ship a production CLI under 10 MB with `2-amalgamate`, and under 6 MB with `3-best`. The dramatic deltas are in heavy-by-default languages (Java fat JAR 28 → 6 MB at 3-best; C# self-contained 72 → 5 MB; Python venv 84 → 4 MB; Node npm-tsc 200 → 2 MB). Go and Rust at `3-best` drop to **80–120 KB** — a literal **2500× gap** from Node's naive 200 MB baseline. The cost of `3-best` over `2-amalgamate` is always a stated trade-off: nightly toolchain, no GC, missing API surface, or no stack traces (see per-language README).
 
 ---
 
-## Visual C — Container image (all 32 variants)
+## Visual C — Container image (all 38 variants)
 
 What hits a container registry / pulls during deploy. Each language uses its own scale.
 
@@ -177,7 +189,8 @@ What hits a container registry / pulls during deploy. Each language uses its own
 1-after-graalvm-native        █████                                     25 MB   (debian-slim)
 1-after-spring-native         ██████████████                            70 MB   (debian-slim)
 1-after-quarkus-native        ████████████                              60 MB   (debian-slim)
-2-amalgamate                  ██                                        12 MB   ← best (debian-slim)
+2-amalgamate                  ██                                        12 MB   (debian-slim)
+3-best                        █                                         6 MB    ← best (FROM scratch)
 ```
 
 ### C# / .NET   (scale: 1 char ≈ 2.1 MB)
@@ -187,7 +200,8 @@ What hits a container registry / pulls during deploy. Each language uses its own
 1-after-trimmed               ████████████████                          35 MB   (alpine runtime-deps)
 1-after-r2r                   ████████████████████████████████████████  85 MB   (alpine runtime-deps)
 1-after-aot                   ██████                                    15 MB   (alpine runtime-deps)
-2-amalgamate                  █████                                     13 MB   ← best (alpine runtime-deps)
+2-amalgamate                  █████                                     13 MB   (alpine runtime-deps)
+3-best                        ███                                       9 MB    ← best (alpine runtime-deps, max-trim)
 ```
 
 ### Python   (scale: 1 char ≈ 3.75 MB)
@@ -198,7 +212,8 @@ What hits a container registry / pulls during deploy. Each language uses its own
 1-after-pyinstaller           ████████████████████                      80 MB   (debian-slim)
 1-after-nuitka                ████████████████████                      80 MB   (debian-slim)
 1-after-pex                   ████████████                              50 MB   (python:3.11-alpine)
-2-amalgamate                  ██                                        10 MB   ← best (debian-slim)
+2-amalgamate                  ██                                        10 MB   (debian-slim)
+3-best                        █                                         5 MB    ← best (debian-slim, PyOxidizer)
 ```
 
 ### Node / TypeScript   (scale: 1 char ≈ 6 MB)
@@ -210,7 +225,8 @@ What hits a container registry / pulls during deploy. Each language uses its own
 1-after-webpack               ███████                                   45 MB   (node:20-alpine)
 1-after-ncc                   ███████                                   45 MB   (node:20-alpine)
 1-after-bun-compile           ███████████                               70 MB   (debian-slim)
-2-amalgamate                  █                                         7 MB    ← best (debian-slim, UPX-llrt)
+2-amalgamate                  █                                         7 MB    (debian-slim, UPX-llrt)
+3-best                        ▏                                         2 MB    ← best (FROM scratch, QuickJS-NG)
 ```
 
 ### Go   (scale: 1 char ≈ 0.25 MB)
@@ -219,7 +235,8 @@ What hits a container registry / pulls during deploy. Each language uses its own
 0-before-default-build        ████████████████████████████████████████  10 MB   (FROM scratch)
 1-after-strip-upx             ████████                                  2 MB    (FROM scratch)
 1-after-tinygo                ██                                        0.6 MB  (FROM scratch)
-2-amalgamate                  █                                         0.3 MB  ← best (FROM scratch)
+2-amalgamate                  █                                         0.3 MB  (FROM scratch)
+3-best                        ▏                                         0.13 MB ← best (FROM scratch)
 ```
 
 ### Rust   (scale: 1 char ≈ 0.175 MB)
@@ -228,16 +245,19 @@ What hits a container registry / pulls during deploy. Each language uses its own
 0-before-default-release      ████████████████████████████████████████  7 MB    (FROM scratch)
 1-after-size-profile-upx      ███                                       0.5 MB  (FROM scratch)
 1-after-musl-static           ███████████████████████                   4 MB    (FROM scratch)
-2-amalgamate                  ██                                        0.3 MB  ← best (FROM scratch)
+2-amalgamate                  ██                                        0.3 MB  (FROM scratch)
+3-best                        ▏                                         0.09 MB ← best (FROM scratch)
 ```
 
-**Takeaway:** the **container-image story compounds with the artifact story**. Languages that produce native binaries (Go, Rust, Java GraalVM, C# AOT) collapse to `FROM scratch` images — the container is *just the artifact + a few KB of OCI metadata*. JVM/.NET/Python/Node images carry a base layer that often dwarfs the app code (Node esbuild ships 1.5 MB but the alpine + Node base brings the image to 45 MB). For minimum-deploy-cost workloads, the question is less "which language" and more "which packaging tier" — `2-amalgamate` everywhere lands under 15 MB, and Go/Rust hit kilobytes.
+**Takeaway:** the **container-image story compounds with the artifact story**. Languages that produce native binaries (Go, Rust, Java GraalVM, C# AOT) collapse to `FROM scratch` images — the container is *just the artifact + a few KB of OCI metadata*. JVM/.NET/Python/Node images carry a base layer that often dwarfs the app code (Node esbuild ships 1.5 MB but the alpine + Node base brings the image to 45 MB). For minimum-deploy-cost workloads, the question is less "which language" and more "which packaging tier" — `2-amalgamate` everywhere lands under 15 MB, `3-best` everywhere lands under 9 MB, and Go/Rust at `3-best` hit double-digit kilobytes.
 
 ---
 
-## Cross-language summary — 2-amalgamate (the lower bound per language)
+## Cross-language summary — the lower bound per language
 
-The smallest reasonable production deployment achievable per language, every safe optimization stacked:
+The smallest reasonable production deployment achievable per language at each tier:
+
+### `2-amalgamate` — every safe optimization stacked
 
 ```
                               Artifact            Container
@@ -249,19 +269,36 @@ Go                            0.2 MB              0.3 MB    (FROM scratch + Tiny
 Rust                          0.3 MB              0.3 MB    (FROM scratch + musl + size-profile + UPX)
 ```
 
-A 200 MB Node CLI in `0-before-npm-tsc/` and a 0.3 MB Rust binary in `rust/2-amalgamate/` are running **the exact same trivial CLI** (`{"hello":"world","language":"...","uuid":"...","timestamp":"..."}`). The 666× delta is entirely packaging.
+### `3-best` — every safe knob PLUS the next aggressive lever (with stated trade-offs)
+
+```
+                              Artifact            Container   Trade
+Java/Kotlin                   6 MB                6 MB        epsilon GC (no GC, single-shot only); UPX
+C# / .NET                     5 MB                9 MB        no stack traces on crash; internal MSBuild flags
+Python                        4 MB                5 MB        PyOxidizer foundation (less mainstream than Nuitka)
+Node / TypeScript             2 MB                2 MB        QuickJS-NG runtime — pure ECMAScript, no Node APIs
+Go                            0.12 MB             0.13 MB     leaking GC + no scheduler + silent panic
+Rust                          0.08 MB             0.09 MB     nightly toolchain; immediate-abort panic
+```
+
+A 200 MB Node CLI in `0-before-npm-tsc/` and an 80 KB Rust binary in `rust/3-best/` are running **the exact same trivial CLI** (`{"hello":"world","language":"...","uuid":"...","timestamp":"..."}`). The 2500× delta is entirely packaging.
 
 ---
 
 ## What this POC demonstrates
 
-Each language folder contains three tiers of variants:
+Each language folder contains four tiers of variants:
 
 1. **`0-before-<solution>/`** — the *naive default* deployment for that language (e.g., `0-before-spring-boot-fat-jar/`, `0-before-npm-tsc/`). What most teams ship without thinking about size.
 2. **`1-after-<solution>/`** — an *individual optimization technique* (e.g., `1-after-graalvm-native/`, `1-after-esbuild/`). Each language has 1–5 of these, each isolating one technique so you can compare them side by side.
-3. **`2-amalgamate/`** — *every applicable technique stacked* on the same source: native compile + size flags + UPX (where compatible) + `FROM scratch` container. The smallest reasonable deployment shape achievable per language, all knobs in the same direction.
+3. **`2-amalgamate/`** — *every applicable safe technique stacked* on the same source: native compile + size flags + UPX (where compatible) + `FROM scratch` container. The smallest deployment shape achievable per language **without making lossy trade-offs** — no GC swap, no API-surface drop, no nightly toolchains. Stable, mainstream, production-recommended.
+4. **`3-best/`** — *the absolutely smallest possible*, stacks `2-amalgamate` plus the next aggressive lever the language exposes — at the cost of a clearly-stated trade. Rust uses nightly + `build-std` rebuild; Java swaps to epsilon (no-op) GC; Python swaps Nuitka → PyOxidizer; Node swaps llrt → QuickJS-NG (pure ECMAScript, no Node APIs); Go drops the GC and goroutine scheduler; C# drops stack-trace data. Each `3-best/README.md` lists exactly what's traded.
 
-The numeric prefix forces useful sort order: when you `ls` a language folder, the naive baseline appears first, individual optimizations next, and the amalgamated "everything stacked" at the bottom. The folder name after the prefix tells you the technique at a glance — no need to open the README to know what `csharp/1-after-aot/` or `node/1-after-esbuild-llrt/` is.
+The numeric prefix forces useful sort order: when you `ls` a language folder, the naive baseline appears first, individual optimizations next, the safe-amalgamate next, and the trade-off-accepting `3-best` at the bottom. The folder name after the prefix tells you the technique at a glance — no need to open the README to know what `csharp/1-after-aot/` or `node/1-after-esbuild-llrt/` is.
+
+**Tier picker for engineering decisions:**
+- Default to `2-amalgamate` for production. It's the smallest size you can ship without operational compromises.
+- Reach for `3-best` only when the constraint demands it (per-byte cold-start billing, IoT firmware, edge functions, bandwidth-constrained distribution) and you've read the trade-off list in the per-language `3-best/README.md`.
 
 Every variant folder includes a **`Dockerfile`** alongside the source + build script — multi-stage build that compiles inside Docker (no local toolchain needed) and ships the smallest reasonable image (`FROM scratch` where possible, alpine/distroless otherwise).
 
@@ -319,14 +356,16 @@ poc-multi-language-lightweight-packaging/
 │   ├── 1-after-graalvm-native/              ← GraalVM native (plain Java)
 │   ├── 1-after-spring-native/               ← Spring Boot 3 + GraalVM
 │   ├── 1-after-quarkus-native/              ← Quarkus native-first framework
-│   └── 2-amalgamate/                        ← stack every safe knob (GraalVM + size flags + scratch)
+│   ├── 2-amalgamate/                        ← stack every safe knob (GraalVM + size flags + scratch)
+│   └── 3-best/                              ← 2-amalgamate + epsilon GC + UPX-LZMA (smallest possible)
 ├── csharp/
 │   ├── README.md
 │   ├── 0-before-self-contained/             ← default self-contained (naive baseline)
 │   ├── 1-after-trimmed/                     ← PublishTrimmed (no AOT)
 │   ├── 1-after-r2r/                         ← ReadyToRun precompiled
 │   ├── 1-after-aot/                         ← Native AOT trimmed
-│   └── 2-amalgamate/                        ← stack every safe knob (AOT + trim + reflection-off + size-opt)
+│   ├── 2-amalgamate/                        ← stack every safe knob (AOT + trim + reflection-off + size-opt)
+│   └── 3-best/                              ← 2-amalgamate + max-trim + no-stack-trace data (smallest possible)
 ├── python/
 │   ├── README.md
 │   ├── 0-before-venv-deps/                  ← venv + deps (naive baseline)
@@ -334,7 +373,8 @@ poc-multi-language-lightweight-packaging/
 │   ├── 1-after-pyinstaller/                 ← PyInstaller onefile
 │   ├── 1-after-nuitka/                      ← Nuitka (Python → C → native)
 │   ├── 1-after-pex/                         ← PEX (zipapp+)
-│   └── 2-amalgamate/                        ← stack every safe knob (Nuitka + LTO + size flags + scratch)
+│   ├── 2-amalgamate/                        ← stack every safe knob (Nuitka + LTO + size flags + scratch)
+│   └── 3-best/                              ← PyOxidizer + memory-only modules + UPX-LZMA (smallest possible)
 ├── node/
 │   ├── README.md
 │   ├── 0-before-npm-tsc/                    ← npm install + tsc (naive baseline)
@@ -343,19 +383,22 @@ poc-multi-language-lightweight-packaging/
 │   ├── 1-after-webpack/                     ← webpack + Terser
 │   ├── 1-after-ncc/                         ← @vercel/ncc
 │   ├── 1-after-bun-compile/                 ← bun --compile single binary
-│   └── 2-amalgamate/                        ← stack every safe knob (esbuild + UPX-llrt + scratch)
+│   ├── 2-amalgamate/                        ← stack every safe knob (esbuild + UPX-llrt + scratch)
+│   └── 3-best/                              ← esbuild + QuickJS-NG runtime + UPX-LZMA + scratch (smallest possible)
 ├── go/
 │   ├── README.md
 │   ├── 0-before-default-build/              ← default go build (naive baseline)
 │   ├── 1-after-strip-upx/                   ← strip + UPX
 │   ├── 1-after-tinygo/                      ← TinyGo compiler (smaller stdlib)
-│   └── 2-amalgamate/                        ← stack every safe knob (TinyGo + opt=z + UPX + scratch)
+│   ├── 2-amalgamate/                        ← stack every safe knob (TinyGo + opt=z + UPX + scratch)
+│   └── 3-best/                              ← TinyGo + leaking GC + no scheduler + panic-trap (smallest possible)
 └── rust/
     ├── README.md
     ├── 0-before-default-release/            ← default cargo build --release (naive baseline)
     ├── 1-after-size-profile-upx/            ← opt-z + LTO + strip + UPX
     ├── 1-after-musl-static/                 ← musl static (Linux, FROM scratch ready)
-    └── 2-amalgamate/                        ← stack every safe knob (musl + opt-z + LTO=fat + UPX + scratch)
+    ├── 2-amalgamate/                        ← stack every safe knob (musl + opt-z + LTO=fat + UPX + scratch)
+    └── 3-best/                              ← nightly + build-std + immediate-abort + UPX-LZMA (smallest possible)
 ```
 
 ---
@@ -384,6 +427,12 @@ You only need the toolchains for the languages and variants you want to build �
 | Go | `1-after-tinygo` | + TinyGo (https://tinygo.org/) |
 | Rust | `0-before-default-release`, `1-after-size-profile-upx` | rustup + cargo (UPX for `1-after-size-profile-upx`) |
 | Rust | `1-after-musl-static` | + `rustup target add x86_64-unknown-linux-musl` (auto-runs in build script) |
+| Rust | `3-best` | + nightly toolchain + `rust-src` (auto-installed via `rust-toolchain.toml`) |
+| Java / Kotlin | `3-best` | same as `2-amalgamate` (GraalVM 21 + Maven) + UPX |
+| C# | `3-best` | same as `1-after-aot` (.NET 8.0 + C++ build tools) |
+| Python | `3-best` | + Rust toolchain (PyOxidizer is installed via `cargo install pyoxidizer`) |
+| Node / TS | `3-best` | Node 20+ for esbuild; QuickJS-NG binary auto-downloaded (or compiled in Docker build) |
+| Go | `3-best` | same as `1-after-tinygo` (TinyGo + UPX) |
 
 UPX install: `choco install upx` (Windows), `apt install upx-ucl` (Debian/Ubuntu), `brew install upx` (macOS).
 
@@ -433,19 +482,19 @@ The Dockerfiles use multi-stage builds — compilation happens in a build-toolin
 
 | Language | Variants scaffolded | Built locally | Numbers verified | Docker images verified |
 |----------|:-------------------:|:-------------:|:----------------:|:----------------------:|
-| Java / Kotlin (6 variants: 1 + 4 + 1 amalgamate) | ✅ | ⏳ | ⏳ | ⏳ |
-| C# (5 variants: 1 + 3 + 1 amalgamate) | ✅ | ⏳ | ⏳ | ⏳ |
-| Python (6 variants: 1 + 4 + 1 amalgamate) | ✅ | ⏳ | ⏳ | ⏳ |
-| Node / TypeScript (7 variants: 1 + 5 + 1 amalgamate) | ✅ | ⏳ | ⏳ | ⏳ |
-| Go (4 variants: 1 + 2 + 1 amalgamate) | ✅ | ⏳ | ⏳ | ⏳ |
-| Rust (4 variants: 1 + 2 + 1 amalgamate) | ✅ | ⏳ | ⏳ | ⏳ |
-| **Total** | **32 variants** (6 baseline + 20 individual + 6 amalgamate) | | | |
+| Java / Kotlin (7 variants: 1 + 4 + 1 amalgamate + 1 best) | ✅ | ⏳ | ⏳ | ⏳ |
+| C# (6 variants: 1 + 3 + 1 amalgamate + 1 best) | ✅ | ⏳ | ⏳ | ⏳ |
+| Python (7 variants: 1 + 4 + 1 amalgamate + 1 best) | ✅ | ⏳ | ⏳ | ⏳ |
+| Node / TypeScript (8 variants: 1 + 5 + 1 amalgamate + 1 best) | ✅ | ⏳ | ⏳ | ⏳ |
+| Go (5 variants: 1 + 2 + 1 amalgamate + 1 best) | ✅ | ⏳ | ⏳ | ⏳ |
+| Rust (5 variants: 1 + 2 + 1 amalgamate + 1 best) | ✅ | ⏳ | ⏳ | ⏳ |
+| **Total** | **38 variants** (6 baseline + 20 individual + 6 amalgamate + 6 best) | | | |
 
 Numbers in the TL;DR headline table (artifact + container image) are **target estimates** until you run:
 
 ```powershell
-./build-all.ps1            # all 26 build.ps1 scripts
+./build-all.ps1            # all 38 build.ps1 scripts
 ./measure.ps1 > MEASUREMENTS.md
-./docker-build-all.ps1     # all 26 Dockerfiles
+./docker-build-all.ps1     # all 38 Dockerfiles
 ./docker-measure.ps1 > DOCKER_MEASUREMENTS.md
 ```
