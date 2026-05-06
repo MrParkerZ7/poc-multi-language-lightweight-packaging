@@ -17,9 +17,9 @@ The Java row is dramatic in the headline table because the *naive* enterprise bu
 
 | Variant | Artifact | Target size | Runtime needed on host? | Cold-start | Technique |
 |---------|----------|------------:|:------------------------|-----------:|-----------|
-| `spring-boot-fat-jar-before/` | Spring Boot fat JAR | ~28 MB | **Yes** (JDK/JRE 21) | ~1.2 s | Default `spring-boot-maven-plugin repackage` |
-| `jlink-after/` | jlink runtime image (folder) | ~32 MB | **No** (JRE bundled) | ~120 ms | Plain Java + Jackson, packaged with `jpackage --type app-image` (which uses jlink internally to ship only required JDK modules) |
-| `graalvm-native-after/` | GraalVM native image (single binary) | **~12 MB** | **No** | **~25 ms** | `native-image` ahead-of-time compilation via `native-maven-plugin` |
+| `before-spring-boot-fat-jar/` | Spring Boot fat JAR | ~28 MB | **Yes** (JDK/JRE 21) | ~1.2 s | Default `spring-boot-maven-plugin repackage` |
+| `after-jlink/` | jlink runtime image (folder) | ~32 MB | **No** (JRE bundled) | ~120 ms | Plain Java + Jackson, packaged with `jpackage --type app-image` (which uses jlink internally to ship only required JDK modules) |
+| `after-graalvm-native/` | GraalVM native image (single binary) | **~12 MB** | **No** | **~25 ms** | `native-image` ahead-of-time compilation via `native-maven-plugin` |
 
 ## Why three variants?
 
@@ -34,15 +34,15 @@ For the exec table, GraalVM native is the headline number; jlink is the "we didn
 
 ```powershell
 # Spring Boot fat JAR (naive baseline)
-cd spring-boot-fat-jar-before
+cd before-spring-boot-fat-jar
 ./build.ps1
 
 # jlink runtime image (needs JDK 21)
-cd jlink-after
+cd after-jlink
 ./build.ps1
 
 # GraalVM native (needs GraalVM 21 + native-image installed)
-cd graalvm-native-after
+cd after-graalvm-native
 ./build.ps1
 ```
 
@@ -50,7 +50,7 @@ cd graalvm-native-after
 
 - JDK 21 (Eclipse Temurin or Liberica)
 - Maven 3.9+
-- For `graalvm-native-after/`: GraalVM 21 with `native-image` (run `gu install native-image`)
+- For `after-graalvm-native/`: GraalVM 21 with `native-image` (run `gu install native-image`)
 
 ## Trade-offs (for the exec)
 

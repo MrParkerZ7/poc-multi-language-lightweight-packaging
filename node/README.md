@@ -19,9 +19,9 @@ The trade is API coverage: llrt implements a subset of Node APIs (most stdlib, b
 
 | Variant | Artifact | Target size | Runtime needed on host? | Cold-start | Technique |
 |---------|----------|------------:|:------------------------|-----------:|-----------|
-| `npm-tsc-before/` | source + `node_modules/` + `dist/` (folder) | ~150–200 MB | **Yes** (Node 20+) | ~120 ms | Default `npm install && tsc` deployment — ship everything |
-| `esbuild-after/` | `dist/app.mjs` (esbuild bundle) | **~1.5 MB** | **Yes** (Node 20+) | ~80 ms | `esbuild --bundle --minify --platform=node` — single JS file with all deps tree-shaken and minified |
-| `esbuild-llrt-after/` | `dist/app.mjs` + AWS `llrt` binary | **~12 MB** total | **No** (llrt bundled, ~10 MB) | ~30 ms | Same esbuild bundle, executed by AWS `llrt` (Rust-based JS subset runtime) |
+| `before-npm-tsc/` | source + `node_modules/` + `dist/` (folder) | ~150–200 MB | **Yes** (Node 20+) | ~120 ms | Default `npm install && tsc` deployment — ship everything |
+| `after-esbuild/` | `dist/app.mjs` (esbuild bundle) | **~1.5 MB** | **Yes** (Node 20+) | ~80 ms | `esbuild --bundle --minify --platform=node` — single JS file with all deps tree-shaken and minified |
+| `after-esbuild-llrt/` | `dist/app.mjs` + AWS `llrt` binary | **~12 MB** total | **No** (llrt bundled, ~10 MB) | ~30 ms | Same esbuild bundle, executed by AWS `llrt` (Rust-based JS subset runtime) |
 
 ## Why three variants?
 
@@ -38,22 +38,22 @@ Node's "lightweight prod deploy" splits into two production techniques, both leg
 
 ```powershell
 # Default deployment (naive baseline)
-cd npm-tsc-before
+cd before-npm-tsc
 ./build.ps1
 
 # esbuild bundle (smallest, needs Node)
-cd esbuild-after
+cd after-esbuild
 ./build.ps1
 
 # esbuild + llrt (no runtime install needed)
-cd esbuild-llrt-after
+cd after-esbuild-llrt
 ./build.ps1   # downloads llrt binary on first run
 ```
 
 ## Prerequisites
 
 - Node 20 or later, npm
-- For `esbuild-llrt-after/`: the build script auto-downloads `llrt` from the AWS GitHub release. No manual install needed.
+- For `after-esbuild-llrt/`: the build script auto-downloads `llrt` from the AWS GitHub release. No manual install needed.
 
 ## Trade-offs (for the exec)
 
@@ -67,4 +67,4 @@ It's a JS *subset*. Pure JS code, basic stdlib (fs, http, crypto, url, buffer), 
 
 > "Can we get even smaller than 1.5 MB?"
 
-For our trivial CLI (no deps used), yes — the bundled `.mjs` would be ~5 KB. The 1.5 MB number reflects what a *real* CLI looks like once you bundle in `axios` / `zod` / `uuid` / `dayjs` (the deps in `npm-tsc-before/`'s `package.json`). Shows what minification actually achieves on a representative codebase, not a Hello World.
+For our trivial CLI (no deps used), yes — the bundled `.mjs` would be ~5 KB. The 1.5 MB number reflects what a *real* CLI looks like once you bundle in `axios` / `zod` / `uuid` / `dayjs` (the deps in `before-npm-tsc/`'s `package.json`). Shows what minification actually achieves on a representative codebase, not a Hello World.

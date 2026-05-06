@@ -16,8 +16,8 @@ For exec audiences this becomes the most dramatic "after" in the table: ~400 KB 
 
 | Variant | Artifact | Target size | Runtime needed on host? | Cold-start | Technique |
 |---------|----------|------------:|:------------------------|-----------:|-----------|
-| `default-release-before/` | `app.exe` (default `cargo build --release`) | ~4–6 MB | **No** (always) | ~3 ms | Default release build |
-| `size-profile-upx-after/` | `app.exe` (opt-z + LTO + strip + UPX) | **~400 KB** | **No** | ~2 ms | `opt-level="z"`, `lto=true`, `strip=true`, `panic="abort"`, `codegen-units=1`, then UPX |
+| `before-default-release/` | `app.exe` (default `cargo build --release`) | ~4–6 MB | **No** (always) | ~3 ms | Default release build |
+| `after-size-profile-upx/` | `app.exe` (opt-z + LTO + strip + UPX) | **~400 KB** | **No** | ~2 ms | `opt-level="z"`, `lto=true`, `strip=true`, `panic="abort"`, `codegen-units=1`, then UPX |
 
 ## Why is "before" already lightweight?
 
@@ -36,18 +36,18 @@ Combined, these can turn a 5 MB default release into a ~300–500 KB binary. For
 
 ```powershell
 # Default release (naive baseline — already lightweight)
-cd default-release-before
+cd before-default-release
 ./build.ps1
 
 # Aggressive size optimization + UPX
-cd size-profile-upx-after
+cd after-size-profile-upx
 ./build.ps1
 ```
 
 ## Prerequisites
 
 - rustup + cargo (stable channel)
-- For `size-profile-upx-after/`: UPX (https://upx.github.io/)
+- For `after-size-profile-upx/`: UPX (https://upx.github.io/)
 
 ## Trade-offs (for the exec)
 

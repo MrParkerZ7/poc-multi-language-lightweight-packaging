@@ -35,10 +35,10 @@ Per-row definition of "packaged":
 
 - **Java** — the fat JAR / jpackage `app/` folder / native binary
 - **C#** — the `publish/` folder (single-file exe + companion native libs for self-contained; just the exe for AOT)
-- **Python `venv-deps-before/`** — source + `.venv/` + installed deps **shipped together** — the naive Python deploy shape; there is no separate "package" for naive Python prod
-- **Python `zipapp-after/`** — `.pyz` zipapp; **`pyinstaller-after/`** — PyInstaller `.exe`
-- **Node `npm-tsc-before/`** — source + `dist/` + full `node_modules/` **shipped together** — the naive Node deploy shape
-- **Node `esbuild-after/`** — single `.mjs` bundle; **`esbuild-llrt-after/`** — `.mjs` + `llrt` binary (both shipped)
+- **Python `before-venv-deps/`** — source + `.venv/` + installed deps **shipped together** — the naive Python deploy shape; there is no separate "package" for naive Python prod
+- **Python `after-zipapp/`** — `.pyz` zipapp; **`after-pyinstaller/`** — PyInstaller `.exe`
+- **Node `before-npm-tsc/`** — source + `dist/` + full `node_modules/` **shipped together** — the naive Node deploy shape
+- **Node `after-esbuild/`** — single `.mjs` bundle; **`after-esbuild-llrt/`** — `.mjs` + `llrt` binary (both shipped)
 - **Go / Rust** — the single executable
 
 The Python and Node "before" rows are intentionally measured as source + deps because that's *how teams actually deploy them naively* (rsync the project + run on host). Measuring only source files for those would understate the operational pain this POC exists to surface.
@@ -90,12 +90,12 @@ Rust                              █                    6 MB    →  ▏       
 
 ## What this POC demonstrates
 
-Each language folder contains one or more **`<solution>-<before|after>/`** sub-folders, where:
+Each language folder contains one or more **`<before|after>-<solution>/`** sub-folders, where:
 
-1. **`<solution>-before/`** — the *naive default* deployment for that language (e.g., `spring-boot-fat-jar-before/`, `npm-tsc-before/`). What most teams ship without thinking about size.
-2. **`<solution>-after/`** — an *optimized* deployment using a specific technique (e.g., `graalvm-native-after/`, `esbuild-after/`). Each language has 1–2 of these, named after the technique applied.
+1. **`before-<solution>/`** — the *naive default* deployment for that language (e.g., `before-spring-boot-fat-jar/`, `before-npm-tsc/`). What most teams ship without thinking about size.
+2. **`after-<solution>/`** — an *optimized* deployment using a specific technique (e.g., `after-graalvm-native/`, `after-esbuild/`). Each language has 1–2 of these, named after the technique applied.
 
-The folder name tells you the technique at a glance — no need to open the README to know what `csharp/aot-after/` or `node/esbuild-llrt-after/` is.
+The folder name tells you the technique at a glance — no need to open the README to know what `csharp/after-aot/` or `node/after-esbuild-llrt/` is. The `before-` / `after-` prefix also groups all naive baselines together when listed alphabetically.
 
 The CLI in every language does **the same trivial thing** (see `_common-spec/CLI_SPEC.md`):
 
@@ -146,31 +146,31 @@ poc-multi-language-lightweight-packaging/
 │   └── CLI_SPEC.md                        ← what the CLI does (same in every language)
 ├── java-kotlin/
 │   ├── README.md                          ← Java-specific table + commands
-│   ├── spring-boot-fat-jar-before/        ← Spring Boot fat JAR (naive baseline)
-│   ├── jlink-after/                       ← jlink modular runtime image
-│   └── graalvm-native-after/              ← GraalVM native image
+│   ├── before-spring-boot-fat-jar/        ← Spring Boot fat JAR (naive baseline)
+│   ├── after-jlink/                       ← jlink modular runtime image
+│   └── after-graalvm-native/              ← GraalVM native image
 ├── csharp/
 │   ├── README.md
-│   ├── self-contained-before/             ← default self-contained (naive baseline)
-│   └── aot-after/                         ← Native AOT trimmed
+│   ├── before-self-contained/             ← default self-contained (naive baseline)
+│   └── after-aot/                         ← Native AOT trimmed
 ├── python/
 │   ├── README.md
-│   ├── venv-deps-before/                  ← venv + deps (naive baseline)
-│   ├── zipapp-after/                      ← zipapp (needs Python)
-│   └── pyinstaller-after/                 ← PyInstaller onefile
+│   ├── before-venv-deps/                  ← venv + deps (naive baseline)
+│   ├── after-zipapp/                      ← zipapp (needs Python)
+│   └── after-pyinstaller/                 ← PyInstaller onefile
 ├── node/
 │   ├── README.md
-│   ├── npm-tsc-before/                    ← npm install + tsc (naive baseline)
-│   ├── esbuild-after/                     ← esbuild bundle (needs Node)
-│   └── esbuild-llrt-after/                ← esbuild + AWS llrt
+│   ├── before-npm-tsc/                    ← npm install + tsc (naive baseline)
+│   ├── after-esbuild/                     ← esbuild bundle (needs Node)
+│   └── after-esbuild-llrt/                ← esbuild + AWS llrt
 ├── go/
 │   ├── README.md
-│   ├── default-build-before/              ← default go build (naive baseline)
-│   └── strip-upx-after/                   ← strip + UPX
+│   ├── before-default-build/              ← default go build (naive baseline)
+│   └── after-strip-upx/                   ← strip + UPX
 └── rust/
     ├── README.md
-    ├── default-release-before/            ← default cargo build --release (naive baseline)
-    └── size-profile-upx-after/            ← opt-z + LTO + strip + UPX
+    ├── before-default-release/            ← default cargo build --release (naive baseline)
+    └── after-size-profile-upx/            ← opt-z + LTO + strip + UPX
 ```
 
 ---
@@ -198,7 +198,7 @@ Each sub-project has a `build.ps1` (PowerShell, Windows-native) and prints the a
 
 ```powershell
 # Build a single variant
-cd java-kotlin/jlink-after
+cd java-kotlin/after-jlink
 ./build.ps1
 # → Artifact: target/app/bin/app  (32.4 MB)
 # → Cold-start: 118 ms

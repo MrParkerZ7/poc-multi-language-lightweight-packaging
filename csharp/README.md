@@ -14,8 +14,8 @@ So C# inherits the same dual-cost shape as Java, just with different numbers —
 
 | Variant | Artifact | Target size | Runtime needed on host? | Cold-start | Technique |
 |---------|----------|------------:|:------------------------|-----------:|-----------|
-| `self-contained-before/` | self-contained .exe + folder | ~72 MB | **No** (full .NET runtime bundled) | ~80 ms | Default `dotnet publish -r win-x64 --self-contained -p:PublishSingleFile=true` |
-| `aot-after/` | AOT-compiled single .exe | **~11 MB** | **No** | **~18 ms** | `dotnet publish -c Release -r win-x64 -p:PublishAot=true` (Native AOT, .NET 8+) |
+| `before-self-contained/` | self-contained .exe + folder | ~72 MB | **No** (full .NET runtime bundled) | ~80 ms | Default `dotnet publish -r win-x64 --self-contained -p:PublishSingleFile=true` |
+| `after-aot/` | AOT-compiled single .exe | **~11 MB** | **No** | **~18 ms** | `dotnet publish -c Release -r win-x64 -p:PublishAot=true` (Native AOT, .NET 8+) |
 
 ## Why no separate "no runtime" variant for C#?
 
@@ -30,11 +30,11 @@ For most modern CLI/microservice workloads, AOT is the right answer in 2026. For
 
 ```powershell
 # Self-contained (naive baseline)
-cd self-contained-before
+cd before-self-contained
 ./build.ps1
 
 # Native AOT (~6× smaller, ~4× faster cold-start)
-cd aot-after
+cd after-aot
 ./build.ps1
 ```
 

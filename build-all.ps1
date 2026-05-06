@@ -5,21 +5,21 @@ $ErrorActionPreference = "Continue"
 $root = $PSScriptRoot
 
 $variants = @(
-    @{ Lang = "java"   ; Path = "java-kotlin/spring-boot-fat-jar-before"  },
-    @{ Lang = "java"   ; Path = "java-kotlin/jlink-after"                 },
-    @{ Lang = "java"   ; Path = "java-kotlin/graalvm-native-after"        },
-    @{ Lang = "csharp" ; Path = "csharp/self-contained-before"            },
-    @{ Lang = "csharp" ; Path = "csharp/aot-after"                        },
-    @{ Lang = "python" ; Path = "python/venv-deps-before"                 },
-    @{ Lang = "python" ; Path = "python/zipapp-after"                     },
-    @{ Lang = "python" ; Path = "python/pyinstaller-after"                },
-    @{ Lang = "node"   ; Path = "node/npm-tsc-before"                     },
-    @{ Lang = "node"   ; Path = "node/esbuild-after"                      },
-    @{ Lang = "node"   ; Path = "node/esbuild-llrt-after"                 },
-    @{ Lang = "go"     ; Path = "go/default-build-before"                 },
-    @{ Lang = "go"     ; Path = "go/strip-upx-after"                      },
-    @{ Lang = "rust"   ; Path = "rust/default-release-before"             },
-    @{ Lang = "rust"   ; Path = "rust/size-profile-upx-after"             }
+    @{ Lang = "java"   ; Path = "java-kotlin/before-spring-boot-fat-jar" },
+    @{ Lang = "java"   ; Path = "java-kotlin/after-jlink"                },
+    @{ Lang = "java"   ; Path = "java-kotlin/after-graalvm-native"       },
+    @{ Lang = "csharp" ; Path = "csharp/before-self-contained"           },
+    @{ Lang = "csharp" ; Path = "csharp/after-aot"                       },
+    @{ Lang = "python" ; Path = "python/before-venv-deps"                },
+    @{ Lang = "python" ; Path = "python/after-zipapp"                    },
+    @{ Lang = "python" ; Path = "python/after-pyinstaller"               },
+    @{ Lang = "node"   ; Path = "node/before-npm-tsc"                    },
+    @{ Lang = "node"   ; Path = "node/after-esbuild"                     },
+    @{ Lang = "node"   ; Path = "node/after-esbuild-llrt"                },
+    @{ Lang = "go"     ; Path = "go/before-default-build"                },
+    @{ Lang = "go"     ; Path = "go/after-strip-upx"                     },
+    @{ Lang = "rust"   ; Path = "rust/before-default-release"            },
+    @{ Lang = "rust"   ; Path = "rust/after-size-profile-upx"            }
 )
 
 Write-Host ""

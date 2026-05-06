@@ -20,8 +20,8 @@ For those cases, stripping symbols and UPX-compressing brings Go to ~1.5 MB with
 
 | Variant | Artifact | Target size | Runtime needed on host? | Cold-start | Technique |
 |---------|----------|------------:|:------------------------|-----------:|-----------|
-| `default-build-before/` | `app.exe` (default `go build`) | ~6–8 MB | **No** (always) | ~5 ms | Default `go build` — already a single static binary |
-| `strip-upx-after/` | `app.exe` (stripped + UPX-compressed) | **~1.5 MB** | **No** | ~4 ms | `go build -ldflags="-s -w" -trimpath` + `upx --best --lzma` |
+| `before-default-build/` | `app.exe` (default `go build`) | ~6–8 MB | **No** (always) | ~5 ms | Default `go build` — already a single static binary |
+| `after-strip-upx/` | `app.exe` (stripped + UPX-compressed) | **~1.5 MB** | **No** | ~4 ms | `go build -ldflags="-s -w" -trimpath` + `upx --best --lzma` |
 
 ## Why is "before" already lightweight?
 
@@ -37,18 +37,18 @@ For exec audiences, the Go row is the "no minimization needed and it's already s
 
 ```powershell
 # Default (naive baseline — already lightweight)
-cd default-build-before
+cd before-default-build
 ./build.ps1
 
 # Stripped + UPX
-cd strip-upx-after
+cd after-strip-upx
 ./build.ps1
 ```
 
 ## Prerequisites
 
 - Go 1.21 or later
-- For `strip-upx-after/`: UPX (https://upx.github.io/). On Windows: `choco install upx` or download the binary and put it on PATH.
+- For `after-strip-upx/`: UPX (https://upx.github.io/). On Windows: `choco install upx` or download the binary and put it on PATH.
 
 ## Trade-offs (for the exec)
 

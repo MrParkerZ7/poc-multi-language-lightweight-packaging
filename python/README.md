@@ -19,9 +19,9 @@ Both are legitimately deployed in production. The exec choice is "do we already 
 
 | Variant | Artifact | Target size | Runtime needed on host? | Cold-start | Technique |
 |---------|----------|------------:|:------------------------|-----------:|-----------|
-| `venv-deps-before/` | source + venv + deps (folder) | ~84 MB | **Yes** (Python 3.11+) | ~70 ms | Default `pip install -r requirements.txt` into a venv, ship the whole thing |
-| `zipapp-after/` | `app.pyz` (zipapp) | **~10 KB**–1.2 MB | **Yes** (Python 3.11+) | ~70 ms | `python -m zipapp` — single archive, stdlib-only or vendored deps |
-| `pyinstaller-after/` | `app.exe` (PyInstaller) | **~9.8 MB** | **No** | ~110 ms | `pyinstaller --onefile` — bundles a stripped Python interpreter |
+| `before-venv-deps/` | source + venv + deps (folder) | ~84 MB | **Yes** (Python 3.11+) | ~70 ms | Default `pip install -r requirements.txt` into a venv, ship the whole thing |
+| `after-zipapp/` | `app.pyz` (zipapp) | **~10 KB**–1.2 MB | **Yes** (Python 3.11+) | ~70 ms | `python -m zipapp` — single archive, stdlib-only or vendored deps |
+| `after-pyinstaller/` | `app.exe` (PyInstaller) | **~9.8 MB** | **No** | ~110 ms | `pyinstaller --onefile` — bundles a stripped Python interpreter |
 
 ## Why three variants?
 
@@ -36,22 +36,22 @@ The before/after spread is dramatic: `pip install` of typical enterprise deps (r
 
 ```powershell
 # Show the typical naive deploy — venv + deps
-cd venv-deps-before
+cd before-venv-deps
 ./build.ps1
 
 # zipapp (smallest artifact, needs Python)
-cd zipapp-after
+cd after-zipapp
 ./build.ps1
 
 # PyInstaller onefile (no Python needed on host)
-cd pyinstaller-after
+cd after-pyinstaller
 ./build.ps1
 ```
 
 ## Prerequisites
 
 - Python 3.11 or later (with `pip` and `venv`)
-- For `pyinstaller-after/`: `pip install pyinstaller`
+- For `after-pyinstaller/`: `pip install pyinstaller`
 
 ## Trade-offs (for the exec)
 
