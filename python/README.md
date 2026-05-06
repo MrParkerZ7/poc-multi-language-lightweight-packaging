@@ -1,6 +1,6 @@
 # Python — Lightweight Packaging
 
-Same trivial CLI in three production-deployment shapes.
+Same trivial CLI in five production-deployment shapes.
 
 ## The Problem
 
@@ -22,6 +22,8 @@ Both are legitimately deployed in production. The exec choice is "do we already 
 | `before-venv-deps/` | source + venv + deps (folder) | ~84 MB | **Yes** (Python 3.11+) | ~70 ms | Default `pip install -r requirements.txt` into a venv, ship the whole thing |
 | `after-zipapp/` | `app.pyz` (zipapp) | **~10 KB**–1.2 MB | **Yes** (Python 3.11+) | ~70 ms | `python -m zipapp` — single archive, stdlib-only or vendored deps |
 | `after-pyinstaller/` | `app.exe` (PyInstaller) | **~9.8 MB** | **No** | ~110 ms | `pyinstaller --onefile` — bundles a stripped Python interpreter |
+| `after-nuitka/` | `app.exe` (Nuitka onefile) | **~8 MB** | **No** | ~50 ms | `nuitka --onefile` — actually compiles Python → C → native binary; smaller and faster than PyInstaller |
+| `after-pex/` | `app.pex` (PEX) | ~1 MB | **Yes** (Python 3.x) | ~80 ms | Twitter/Pants's "zipapp on steroids" — single .pex file with vendored deps |
 
 ## Why three variants?
 
@@ -46,12 +48,22 @@ cd after-zipapp
 # PyInstaller onefile (no Python needed on host)
 cd after-pyinstaller
 ./build.ps1
+
+# Nuitka onefile (Python -> C -> native, smaller + faster than PyInstaller)
+cd after-nuitka
+./build.ps1
+
+# PEX (zipapp+, single .pex file)
+cd after-pex
+./build.ps1
 ```
 
 ## Prerequisites
 
 - Python 3.11 or later (with `pip` and `venv`)
 - For `after-pyinstaller/`: `pip install pyinstaller`
+- For `after-nuitka/`: `pip install nuitka` (build script auto-installs if missing)
+- For `after-pex/`: `pip install pex` (build script auto-installs if missing)
 
 ## Trade-offs (for the exec)
 

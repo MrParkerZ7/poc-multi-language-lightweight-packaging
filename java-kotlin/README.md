@@ -1,6 +1,6 @@
 # Java / Kotlin — Lightweight Packaging
 
-Same trivial CLI in three production-deployment shapes.
+Same trivial CLI in five production-deployment shapes.
 
 ## The Problem
 
@@ -19,7 +19,9 @@ The Java row is dramatic in the headline table because the *naive* enterprise bu
 |---------|----------|------------:|:------------------------|-----------:|-----------|
 | `before-spring-boot-fat-jar/` | Spring Boot fat JAR | ~28 MB | **Yes** (JDK/JRE 21) | ~1.2 s | Default `spring-boot-maven-plugin repackage` |
 | `after-jlink/` | jlink runtime image (folder) | ~32 MB | **No** (JRE bundled) | ~120 ms | Plain Java + Jackson, packaged with `jpackage --type app-image` (which uses jlink internally to ship only required JDK modules) |
-| `after-graalvm-native/` | GraalVM native image (single binary) | **~12 MB** | **No** | **~25 ms** | `native-image` ahead-of-time compilation via `native-maven-plugin` |
+| `after-graalvm-native/` | GraalVM native image (single binary) | **~12 MB** | **No** | **~25 ms** | `native-image` ahead-of-time compilation via `native-maven-plugin` (plain Java + Jackson) |
+| `after-spring-native/` | Spring Boot 3 + GraalVM native | ~60 MB | **No** | ~35 ms | Spring Boot 3 with native profile — keeps Spring DI/auto-config but compiles to single binary |
+| `after-quarkus-native/` | Quarkus native (single binary) | ~50 MB | **No** | **~20 ms** | Quarkus native-first JVM framework — fastest cold-start of the five |
 
 ## Why three variants?
 
@@ -41,8 +43,16 @@ cd before-spring-boot-fat-jar
 cd after-jlink
 ./build.ps1
 
-# GraalVM native (needs GraalVM 21 + native-image installed)
+# GraalVM native — plain Java (needs GraalVM 21 + native-image installed)
 cd after-graalvm-native
+./build.ps1
+
+# Spring Boot 3 + GraalVM native (keeps Spring, AOT-compiled)
+cd after-spring-native
+./build.ps1
+
+# Quarkus native (native-first framework, fast cold-start)
+cd after-quarkus-native
 ./build.ps1
 ```
 
@@ -50,7 +60,7 @@ cd after-graalvm-native
 
 - JDK 21 (Eclipse Temurin or Liberica)
 - Maven 3.9+
-- For `after-graalvm-native/`: GraalVM 21 with `native-image` (run `gu install native-image`)
+- For `after-graalvm-native/`, `after-spring-native/`, `after-quarkus-native/`: GraalVM 21 with `native-image` (run `gu install native-image`)
 
 ## Trade-offs (for the exec)
 

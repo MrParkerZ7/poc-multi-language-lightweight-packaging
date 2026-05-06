@@ -10,13 +10,24 @@ A 30-second exec-friendly comparison of how small a **production CLI deployment*
 |----------|-------:|------:|----------:|:------------------------|-----------:|
 | Java / Kotlin (jlink) | 28 MB | 32 MB | — | No (JRE bundled) | ~120 ms |
 | Java / Kotlin (GraalVM native) | 28 MB | **12 MB** | 57% | **No** | **~25 ms** |
-| C# / .NET (AOT trimmed) | 72 MB | **11 MB** | 85% | **No** | **~18 ms** |
+| Java / Kotlin (Spring Native) | 28 MB | 60 MB | — | **No** | ~35 ms |
+| Java / Kotlin (Quarkus native) | 28 MB | 50 MB | — | **No** | **~20 ms** |
+| C# / .NET (PublishTrimmed) | 72 MB | 25 MB | 65% | **No** | ~60 ms |
+| C# / .NET (ReadyToRun) | 72 MB | 75 MB | — | **No** | ~50 ms |
+| C# / .NET (AOT) | 72 MB | **11 MB** | 85% | **No** | **~18 ms** |
 | Python (zipapp) | 84 MB | 1.2 MB | 99% | Yes (Python 3.11+) | ~70 ms |
-| Python (PyInstaller onefile) | 84 MB | **9.8 MB** | 88% | **No** | ~110 ms |
+| Python (PyInstaller onefile) | 84 MB | 9.8 MB | 88% | **No** | ~110 ms |
+| Python (Nuitka onefile) | 84 MB | **8 MB** | 90% | **No** | ~50 ms |
+| Python (PEX) | 84 MB | 1 MB | 99% | Yes (Python 3.x) | ~80 ms |
 | Node / TypeScript (esbuild bundle) | 200 MB | **1.5 MB** | 99% | Yes (Node 20+) | ~80 ms |
-| Node / TypeScript (llrt bundle) | 200 MB | 12 MB | 94% | **No** (llrt ~10 MB) | ~30 ms |
+| Node / TypeScript (esbuild + llrt) | 200 MB | 12 MB | 94% | **No** (llrt ~10 MB) | ~30 ms |
+| Node / TypeScript (webpack) | 200 MB | 2 MB | 99% | Yes (Node 20+) | ~90 ms |
+| Node / TypeScript (@vercel/ncc) | 200 MB | 2.5 MB | 99% | Yes (Node 20+) | ~85 ms |
+| Node / TypeScript (bun --compile) | 200 MB | 60 MB | 70% | **No** (bun bundled) | ~30 ms |
 | Go (strip + UPX) | 8 MB | **1.5 MB** | 81% | **No** | ~4 ms |
+| Go (TinyGo) | 8 MB | **0.5 MB** | 94% | **No** | ~4 ms |
 | Rust (opt-z + strip + UPX) | 6 MB | **400 KB** | 93% | **No** | ~2 ms |
+| Rust (musl static) | 6 MB | 4 MB | 33% | **No** | ~3 ms |
 
 > Numbers are illustrative target ranges based on the trivial CLI in this POC. Run `pwsh ./build-all.ps1` (or each `build.ps1`) to measure on your machine.
 
@@ -148,29 +159,40 @@ poc-multi-language-lightweight-packaging/
 │   ├── README.md                          ← Java-specific table + commands
 │   ├── before-spring-boot-fat-jar/        ← Spring Boot fat JAR (naive baseline)
 │   ├── after-jlink/                       ← jlink modular runtime image
-│   └── after-graalvm-native/              ← GraalVM native image
+│   ├── after-graalvm-native/              ← GraalVM native (plain Java)
+│   ├── after-spring-native/               ← Spring Boot 3 + GraalVM
+│   └── after-quarkus-native/              ← Quarkus native-first framework
 ├── csharp/
 │   ├── README.md
 │   ├── before-self-contained/             ← default self-contained (naive baseline)
+│   ├── after-trimmed/                     ← PublishTrimmed (no AOT)
+│   ├── after-r2r/                         ← ReadyToRun precompiled
 │   └── after-aot/                         ← Native AOT trimmed
 ├── python/
 │   ├── README.md
 │   ├── before-venv-deps/                  ← venv + deps (naive baseline)
 │   ├── after-zipapp/                      ← zipapp (needs Python)
-│   └── after-pyinstaller/                 ← PyInstaller onefile
+│   ├── after-pyinstaller/                 ← PyInstaller onefile
+│   ├── after-nuitka/                      ← Nuitka (Python → C → native)
+│   └── after-pex/                         ← PEX (zipapp+)
 ├── node/
 │   ├── README.md
 │   ├── before-npm-tsc/                    ← npm install + tsc (naive baseline)
 │   ├── after-esbuild/                     ← esbuild bundle (needs Node)
-│   └── after-esbuild-llrt/                ← esbuild + AWS llrt
+│   ├── after-esbuild-llrt/                ← esbuild + AWS llrt
+│   ├── after-webpack/                     ← webpack + Terser
+│   ├── after-ncc/                         ← @vercel/ncc
+│   └── after-bun-compile/                 ← bun --compile single binary
 ├── go/
 │   ├── README.md
 │   ├── before-default-build/              ← default go build (naive baseline)
-│   └── after-strip-upx/                   ← strip + UPX
+│   ├── after-strip-upx/                   ← strip + UPX
+│   └── after-tinygo/                      ← TinyGo compiler (smaller stdlib)
 └── rust/
     ├── README.md
     ├── before-default-release/            ← default cargo build --release (naive baseline)
-    └── after-size-profile-upx/            ← opt-z + LTO + strip + UPX
+    ├── after-size-profile-upx/            ← opt-z + LTO + strip + UPX
+    └── after-musl-static/                 ← musl static (Linux, FROM scratch ready)
 ```
 
 ---

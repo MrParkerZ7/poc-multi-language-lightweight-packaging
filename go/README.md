@@ -1,6 +1,6 @@
 # Go — Lightweight Packaging
 
-Same trivial CLI in two production-deployment shapes.
+Same trivial CLI in three production-deployment shapes.
 
 ## The Problem
 
@@ -22,6 +22,7 @@ For those cases, stripping symbols and UPX-compressing brings Go to ~1.5 MB with
 |---------|----------|------------:|:------------------------|-----------:|-----------|
 | `before-default-build/` | `app.exe` (default `go build`) | ~6–8 MB | **No** (always) | ~5 ms | Default `go build` — already a single static binary |
 | `after-strip-upx/` | `app.exe` (stripped + UPX-compressed) | **~1.5 MB** | **No** | ~4 ms | `go build -ldflags="-s -w" -trimpath` + `upx --best --lzma` |
+| `after-tinygo/` | `app.exe` (TinyGo compiler) | **~0.5 MB** | **No** | ~4 ms | `tinygo build -opt=z` — alternative compiler, much smaller; trade-off: smaller stdlib coverage |
 
 ## Why is "before" already lightweight?
 
@@ -43,12 +44,17 @@ cd before-default-build
 # Stripped + UPX
 cd after-strip-upx
 ./build.ps1
+
+# TinyGo compiler (much smaller, but smaller stdlib coverage)
+cd after-tinygo
+./build.ps1   # requires tinygo: https://tinygo.org/
 ```
 
 ## Prerequisites
 
 - Go 1.21 or later
 - For `after-strip-upx/`: UPX (https://upx.github.io/). On Windows: `choco install upx` or download the binary and put it on PATH.
+- For `after-tinygo/`: TinyGo (https://tinygo.org/getting-started/install/). Note: `encoding/json` and a few stdlib packages have limited support in TinyGo — verify the trivial CLI builds before relying on it for richer code.
 
 ## Trade-offs (for the exec)
 
