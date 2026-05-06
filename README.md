@@ -95,35 +95,161 @@ Rust       default / size profile ███████████████�
 
 ---
 
-## Visual B — Packaged deployment artifact
+## Visual B — Packaged deployment artifact (all 32 variants)
 
-What actually ships to a production host. Picks the *smallest viable* variant per language; see TL;DR headline for the full 32-row table including alternatives (jlink, Spring Native, Quarkus, R2R, Nuitka, PEX, webpack, ncc, bun-compile, musl-static, plus 2-amalgamate which stacks every safe knob per language).
+What actually ships to a production host. Each language uses its own scale (noted next to language) — within a language, bar lengths are proportional. The `← best` marker calls out the lower-bound variant per language.
 
-```
-                                  Before                          After (best-per-lang)
-                                  ─────────────────────────       ─────────────────────────────────
-Java                              ████████████        28 MB    →  █████              12 MB  (GraalVM native)
-C#                                ████████████████████ 72 MB   →  █████              11 MB  (AOT)
-Python                            ████████████████    84 MB    →  ████               8 MB   (Nuitka)
-Node/TS                           ████████████████████ 200 MB  →  █                  1.5 MB (esbuild bundle)
-Go                                ██                   8 MB    →  ▏                  0.5 MB (TinyGo)
-Rust                              █                    6 MB    →  ▏                  0.4 MB (opt-z + UPX)
-```
+### Java / Kotlin   (scale: 1 char ≈ 1.5 MB)
 
 ```
-                                  Container image (Dockerfile per variant)
-                                  ───────────────────────────────────────────────────
-Java       Spring fat JAR         ████████████████████ ~200 MB
-Java       GraalVM native         ███             ~25 MB     (debian-slim)
-C#         AOT                    ██              ~15 MB     (alpine runtime-deps)
-Python     PyInstaller            ██████████      ~80 MB     (debian-slim)
-Node       esbuild + llrt         ██               ~12 MB    (debian-slim)
-Go         TinyGo                 ▏                ~0.6 MB   (FROM scratch)
-Rust       musl static            ▏                ~4 MB     (FROM scratch)
-Rust       opt-z + UPX            ▏                ~0.5 MB   (FROM scratch)
+0-before-spring-boot-fat-jar  ███████████████████                       28 MB
+1-after-jlink                 █████████████████████                     32 MB
+1-after-graalvm-native        ████████                                  12 MB
+1-after-spring-native         ████████████████████████████████████████  60 MB
+1-after-quarkus-native        █████████████████████████████████         50 MB
+2-amalgamate                  ███████                                   10 MB  ← best
 ```
 
-**Takeaway:** every mainstream language can ship a production CLI under 15 MB. The most dramatic deltas are in the heavy-by-default languages (Java, C#, Python, Node) where naive deploy is 25 MB–200 MB and optimized deploy is 1–12 MB. **Native binaries on `FROM scratch` collapse the container image to almost the artifact size**, which is why Go and Rust dominate the container-image column.
+### C# / .NET   (scale: 1 char ≈ 1.9 MB)
+
+```
+0-before-self-contained       ██████████████████████████████████████    72 MB
+1-after-trimmed               █████████████                             25 MB
+1-after-r2r                   ████████████████████████████████████████  75 MB
+1-after-aot                   ██████                                    11 MB
+2-amalgamate                  █████                                     9 MB   ← best
+```
+
+### Python   (scale: 1 char ≈ 2.1 MB)
+
+```
+0-before-venv-deps            ████████████████████████████████████████  84 MB
+1-after-zipapp                ▏                                         1.2 MB  (needs Python on host)
+1-after-pyinstaller           █████                                     9.8 MB
+1-after-nuitka                ████                                      8 MB
+1-after-pex                   ▏                                         1 MB   (needs Python on host)
+2-amalgamate                  ███                                       7 MB   ← best (no runtime needed)
+```
+
+### Node / TypeScript   (scale: 1 char ≈ 5 MB)
+
+```
+0-before-npm-tsc              ████████████████████████████████████████  200 MB
+1-after-esbuild               ▏                                         1.5 MB  (needs Node on host)
+1-after-esbuild-llrt          ██                                        12 MB
+1-after-webpack               ▏                                         2 MB   (needs Node on host)
+1-after-ncc                   ▏                                         2.5 MB (needs Node on host)
+1-after-bun-compile           ████████████                              60 MB
+2-amalgamate                  █                                         6 MB   ← best (no runtime needed)
+```
+
+### Go   (scale: 1 char ≈ 0.2 MB)
+
+```
+0-before-default-build        ████████████████████████████████████████  8 MB
+1-after-strip-upx             ████████                                  1.5 MB
+1-after-tinygo                ██                                        0.5 MB
+2-amalgamate                  █                                         0.2 MB ← best
+```
+
+### Rust   (scale: 1 char ≈ 0.15 MB)
+
+```
+0-before-default-release      ████████████████████████████████████████  6 MB
+1-after-size-profile-upx      ███                                       0.4 MB
+1-after-musl-static           ███████████████████████████               4 MB
+2-amalgamate                  ██                                        0.3 MB ← best
+```
+
+**Takeaway:** every mainstream language can ship a production CLI under 10 MB once optimized. The dramatic deltas are in heavy-by-default languages (Java fat JAR 28 → 10 MB; C# self-contained 72 → 9 MB; Python venv 84 → 7 MB; Node npm-tsc 200 → 6 MB). Go and Rust drop into the **kilobyte range** with their amalgamates (0.2 MB and 0.3 MB respectively) — a literal four-orders-of-magnitude gap from Node's naive baseline.
+
+---
+
+## Visual C — Container image (all 32 variants)
+
+What hits a container registry / pulls during deploy. Each language uses its own scale.
+
+### Java / Kotlin   (scale: 1 char ≈ 5 MB)
+
+```
+0-before-spring-boot-fat-jar  ████████████████████████████████████████  200 MB  (full JRE base)
+1-after-jlink                 ████████████████                          80 MB   (debian-slim + bundled JRE)
+1-after-graalvm-native        █████                                     25 MB   (debian-slim)
+1-after-spring-native         ██████████████                            70 MB   (debian-slim)
+1-after-quarkus-native        ████████████                              60 MB   (debian-slim)
+2-amalgamate                  ██                                        12 MB   ← best (debian-slim)
+```
+
+### C# / .NET   (scale: 1 char ≈ 2.1 MB)
+
+```
+0-before-self-contained       ██████████████████████████████████████    80 MB   (alpine runtime-deps)
+1-after-trimmed               ████████████████                          35 MB   (alpine runtime-deps)
+1-after-r2r                   ████████████████████████████████████████  85 MB   (alpine runtime-deps)
+1-after-aot                   ██████                                    15 MB   (alpine runtime-deps)
+2-amalgamate                  █████                                     13 MB   ← best (alpine runtime-deps)
+```
+
+### Python   (scale: 1 char ≈ 3.75 MB)
+
+```
+0-before-venv-deps            ████████████████████████████████████████  150 MB  (python:3.11-slim)
+1-after-zipapp                ████████████                              50 MB   (python:3.11-alpine)
+1-after-pyinstaller           ████████████████████                      80 MB   (debian-slim)
+1-after-nuitka                ████████████████████                      80 MB   (debian-slim)
+1-after-pex                   ████████████                              50 MB   (python:3.11-alpine)
+2-amalgamate                  ██                                        10 MB   ← best (debian-slim)
+```
+
+### Node / TypeScript   (scale: 1 char ≈ 6 MB)
+
+```
+0-before-npm-tsc              ████████████████████████████████████████  250 MB  (node:20 + node_modules)
+1-after-esbuild               ███████                                   45 MB   (node:20-alpine)
+1-after-esbuild-llrt          ██                                        12 MB   (debian-slim)
+1-after-webpack               ███████                                   45 MB   (node:20-alpine)
+1-after-ncc                   ███████                                   45 MB   (node:20-alpine)
+1-after-bun-compile           ███████████                               70 MB   (debian-slim)
+2-amalgamate                  █                                         7 MB    ← best (debian-slim, UPX-llrt)
+```
+
+### Go   (scale: 1 char ≈ 0.25 MB)
+
+```
+0-before-default-build        ████████████████████████████████████████  10 MB   (FROM scratch)
+1-after-strip-upx             ████████                                  2 MB    (FROM scratch)
+1-after-tinygo                ██                                        0.6 MB  (FROM scratch)
+2-amalgamate                  █                                         0.3 MB  ← best (FROM scratch)
+```
+
+### Rust   (scale: 1 char ≈ 0.175 MB)
+
+```
+0-before-default-release      ████████████████████████████████████████  7 MB    (FROM scratch)
+1-after-size-profile-upx      ███                                       0.5 MB  (FROM scratch)
+1-after-musl-static           ███████████████████████                   4 MB    (FROM scratch)
+2-amalgamate                  ██                                        0.3 MB  ← best (FROM scratch)
+```
+
+**Takeaway:** the **container-image story compounds with the artifact story**. Languages that produce native binaries (Go, Rust, Java GraalVM, C# AOT) collapse to `FROM scratch` images — the container is *just the artifact + a few KB of OCI metadata*. JVM/.NET/Python/Node images carry a base layer that often dwarfs the app code (Node esbuild ships 1.5 MB but the alpine + Node base brings the image to 45 MB). For minimum-deploy-cost workloads, the question is less "which language" and more "which packaging tier" — `2-amalgamate` everywhere lands under 15 MB, and Go/Rust hit kilobytes.
+
+---
+
+## Cross-language summary — 2-amalgamate (the lower bound per language)
+
+The smallest reasonable production deployment achievable per language, every safe optimization stacked:
+
+```
+                              Artifact            Container
+Java/Kotlin                   10 MB               12 MB     (debian-slim + GraalVM native)
+C# / .NET                     9 MB                13 MB     (alpine runtime-deps + AOT all-knobs)
+Python                        7 MB                10 MB     (debian-slim + Nuitka LTO onefile)
+Node / TypeScript             6 MB                7 MB      (debian-slim + esbuild + UPX-llrt)
+Go                            0.2 MB              0.3 MB    (FROM scratch + TinyGo + UPX)
+Rust                          0.3 MB              0.3 MB    (FROM scratch + musl + size-profile + UPX)
+```
+
+A 200 MB Node CLI in `0-before-npm-tsc/` and a 0.3 MB Rust binary in `rust/2-amalgamate/` are running **the exact same trivial CLI** (`{"hello":"world","language":"...","uuid":"...","timestamp":"..."}`). The 666× delta is entirely packaging.
 
 ---
 
