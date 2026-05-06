@@ -6,30 +6,38 @@ A 30-second exec-friendly comparison of how small a **production CLI deployment*
 
 ## TL;DR Headline
 
-| Language | Before | After | Reduction | Runtime needed on host? | Cold-start |
-|----------|-------:|------:|----------:|:------------------------|-----------:|
-| Java / Kotlin (jlink) | 28 MB | 32 MB | — | No (JRE bundled) | ~120 ms |
-| Java / Kotlin (GraalVM native) | 28 MB | **12 MB** | 57% | **No** | **~25 ms** |
-| Java / Kotlin (Spring Native) | 28 MB | 60 MB | — | **No** | ~35 ms |
-| Java / Kotlin (Quarkus native) | 28 MB | 50 MB | — | **No** | **~20 ms** |
-| C# / .NET (PublishTrimmed) | 72 MB | 25 MB | 65% | **No** | ~60 ms |
-| C# / .NET (ReadyToRun) | 72 MB | 75 MB | — | **No** | ~50 ms |
-| C# / .NET (AOT) | 72 MB | **11 MB** | 85% | **No** | **~18 ms** |
-| Python (zipapp) | 84 MB | 1.2 MB | 99% | Yes (Python 3.11+) | ~70 ms |
-| Python (PyInstaller onefile) | 84 MB | 9.8 MB | 88% | **No** | ~110 ms |
-| Python (Nuitka onefile) | 84 MB | **8 MB** | 90% | **No** | ~50 ms |
-| Python (PEX) | 84 MB | 1 MB | 99% | Yes (Python 3.x) | ~80 ms |
-| Node / TypeScript (esbuild bundle) | 200 MB | **1.5 MB** | 99% | Yes (Node 20+) | ~80 ms |
-| Node / TypeScript (esbuild + llrt) | 200 MB | 12 MB | 94% | **No** (llrt ~10 MB) | ~30 ms |
-| Node / TypeScript (webpack) | 200 MB | 2 MB | 99% | Yes (Node 20+) | ~90 ms |
-| Node / TypeScript (@vercel/ncc) | 200 MB | 2.5 MB | 99% | Yes (Node 20+) | ~85 ms |
-| Node / TypeScript (bun --compile) | 200 MB | 60 MB | 70% | **No** (bun bundled) | ~30 ms |
-| Go (strip + UPX) | 8 MB | **1.5 MB** | 81% | **No** | ~4 ms |
-| Go (TinyGo) | 8 MB | **0.5 MB** | 94% | **No** | ~4 ms |
-| Rust (opt-z + strip + UPX) | 6 MB | **400 KB** | 93% | **No** | ~2 ms |
-| Rust (musl static) | 6 MB | 4 MB | 33% | **No** | ~3 ms |
+| Language | Before | After | Container image | Runtime needed on host? | Cold-start |
+|----------|-------:|------:|----------------:|:------------------------|-----------:|
+| Java / Kotlin (Spring fat JAR — naive) | 28 MB | — | ~200 MB (full JRE base) | Yes (JVM) | ~1.2 s |
+| Java / Kotlin (jlink) | 28 MB | 32 MB | ~80 MB (debian-slim + jlink JRE) | No (JRE bundled) | ~120 ms |
+| Java / Kotlin (GraalVM native) | 28 MB | **12 MB** | **~25 MB** (debian-slim) | **No** | **~25 ms** |
+| Java / Kotlin (Spring Native) | 28 MB | 60 MB | ~70 MB (debian-slim) | **No** | ~35 ms |
+| Java / Kotlin (Quarkus native) | 28 MB | 50 MB | ~60 MB (debian-slim) | **No** | **~20 ms** |
+| C# / .NET (self-contained — naive) | 72 MB | — | ~80 MB (alpine runtime-deps) | **No** | ~80 ms |
+| C# / .NET (PublishTrimmed) | 72 MB | 25 MB | ~35 MB (alpine runtime-deps) | **No** | ~60 ms |
+| C# / .NET (ReadyToRun) | 72 MB | 75 MB | ~85 MB (alpine runtime-deps) | **No** | ~50 ms |
+| C# / .NET (AOT) | 72 MB | **11 MB** | **~15 MB** (alpine runtime-deps) | **No** | **~18 ms** |
+| Python (venv + deps — naive) | 84 MB | — | ~150 MB (python:3.11-slim) | Yes (Python) | ~70 ms |
+| Python (zipapp) | 84 MB | 1.2 MB | ~50 MB (python:3.11-alpine) | Yes (Python 3.11+) | ~70 ms |
+| Python (PyInstaller) | 84 MB | 9.8 MB | ~80 MB (debian-slim + glibc) | **No** | ~110 ms |
+| Python (Nuitka) | 84 MB | **8 MB** | ~80 MB (debian-slim + glibc) | **No** | ~50 ms |
+| Python (PEX) | 84 MB | 1 MB | ~50 MB (python:3.11-alpine) | Yes (Python 3.x) | ~80 ms |
+| Node / TypeScript (npm + tsc — naive) | 200 MB | — | ~250 MB (node:20-alpine + node_modules) | Yes (Node) | ~120 ms |
+| Node / TypeScript (esbuild) | 200 MB | **1.5 MB** | ~45 MB (node:20-alpine) | Yes (Node 20+) | ~80 ms |
+| Node / TypeScript (esbuild + llrt) | 200 MB | 12 MB | **~12 MB** (debian-slim) | **No** | ~30 ms |
+| Node / TypeScript (webpack) | 200 MB | 2 MB | ~45 MB (node:20-alpine) | Yes (Node 20+) | ~90 ms |
+| Node / TypeScript (@vercel/ncc) | 200 MB | 2.5 MB | ~45 MB (node:20-alpine) | Yes (Node 20+) | ~85 ms |
+| Node / TypeScript (bun --compile) | 200 MB | 60 MB | ~70 MB (debian-slim) | **No** | ~30 ms |
+| Go (default) | 8 MB | — | **~10 MB** (FROM scratch) | **No** | ~5 ms |
+| Go (strip + UPX) | 8 MB | **1.5 MB** | **~2 MB** (FROM scratch) | **No** | ~4 ms |
+| Go (TinyGo) | 8 MB | **0.5 MB** | **~0.6 MB** (FROM scratch) | **No** | ~4 ms |
+| Rust (default) | 6 MB | — | ~7 MB (FROM scratch) | **No** | ~3 ms |
+| Rust (opt-z + UPX) | 6 MB | **400 KB** | **~0.5 MB** (FROM scratch) | **No** | ~2 ms |
+| Rust (musl static) | 6 MB | 4 MB | ~4 MB (FROM scratch) | **No** | ~3 ms |
 
-> Numbers are illustrative target ranges based on the trivial CLI in this POC. Run `pwsh ./build-all.ps1` (or each `build.ps1`) to measure on your machine.
+> Numbers are illustrative target ranges based on the trivial CLI in this POC. Run `pwsh ./build-all.ps1` (or each `build.ps1`) for artifact sizes; `pwsh ./docker-build-all.ps1` for container images.
+
+The **Container image** column is the operational reality for cloud deploys — what hits a container registry. Notice how `FROM scratch` for Go / Rust / native binaries collapses to nearly the artifact size, while JVM / .NET / Python / Node images carry a base layer that often dwarfs the app code.
 
 ---
 
@@ -104,9 +112,11 @@ Rust                              █                    6 MB    →  ▏       
 Each language folder contains one or more **`<before|after>-<solution>/`** sub-folders, where:
 
 1. **`before-<solution>/`** — the *naive default* deployment for that language (e.g., `before-spring-boot-fat-jar/`, `before-npm-tsc/`). What most teams ship without thinking about size.
-2. **`after-<solution>/`** — an *optimized* deployment using a specific technique (e.g., `after-graalvm-native/`, `after-esbuild/`). Each language has 1–2 of these, named after the technique applied.
+2. **`after-<solution>/`** — an *optimized* deployment using a specific technique (e.g., `after-graalvm-native/`, `after-esbuild/`). Each language has 1–4 of these, named after the technique applied.
 
 The folder name tells you the technique at a glance — no need to open the README to know what `csharp/after-aot/` or `node/after-esbuild-llrt/` is. The `before-` / `after-` prefix also groups all naive baselines together when listed alphabetically.
+
+Every variant folder includes a **`Dockerfile`** alongside the source + build script — multi-stage build that compiles inside Docker (no local toolchain needed) and ships the smallest reasonable image (`FROM scratch` where possible, alpine/distroless otherwise).
 
 The CLI in every language does **the same trivial thing** (see `_common-spec/CLI_SPEC.md`):
 
@@ -229,11 +239,28 @@ cd java-kotlin/after-jlink
 ./build-all.ps1
 ```
 
-After a full build, regenerate the headline table:
+After a full build, regenerate the artifact-size table:
 
 ```powershell
 ./measure.ps1 > MEASUREMENTS.md
 ```
+
+### Docker images
+
+Every variant ships with a multi-stage `Dockerfile` so you can produce a container image *without installing the toolchain locally*:
+
+```powershell
+# Build one variant's image
+docker build -t poc-lightweight/rust-musl-static rust/after-musl-static
+
+# Build all variants (tags each as poc-lightweight/<lang>-<variant>:latest)
+./docker-build-all.ps1
+
+# Regenerate the container-image-size table
+./docker-measure.ps1 > DOCKER_MEASUREMENTS.md
+```
+
+The Dockerfiles use multi-stage builds — compilation happens in a build-tooling base image (Maven, .NET SDK, Python+Nuitka, Node+esbuild, golang, rust+musl, etc.), and the final stage ships only the artifact on the smallest reasonable runtime base (`FROM scratch` for Go / Rust / native binaries; `alpine` or `runtime-deps` for JVM / .NET / Python / Node).
 
 ---
 
