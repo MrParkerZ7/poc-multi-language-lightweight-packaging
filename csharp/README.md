@@ -18,6 +18,7 @@ So C# inherits the same dual-cost shape as Java, just with different numbers —
 | `1-after-trimmed/` | trimmed self-contained | ~25 MB | **No** | ~60 ms | `PublishTrimmed=true` — drops unused IL, keeps JIT runtime; full reflection still works on referenced types |
 | `1-after-r2r/` | ReadyToRun precompiled | ~75 MB | **No** | ~50 ms | `PublishReadyToRun=true` — precompiles IL→native at publish; faster cold-start, slightly larger |
 | `1-after-aot/` | Native AOT single .exe | **~11 MB** | **No** | **~18 ms** | `PublishAot=true` (.NET 8+) — full AOT compile, smallest + fastest |
+| `2-amalgamate/` | Native AOT + every safe knob | **~9 MB** | **No** | **~15 ms** | AOT + `TrimMode=full` + `IlcDisableReflection` + `OptimizationPreference=Size` + EventSource/Metrics/Debugger off + `IlcFoldIdenticalMethodBodies` (stacked). UPX skipped — known incompatibility with .NET AOT loader. |
 
 ## Why no separate "no runtime" variant for C#?
 
@@ -45,6 +46,10 @@ cd 1-after-r2r
 
 # Native AOT (~6× smaller, ~4× faster cold-start)
 cd 1-after-aot
+./build.ps1
+
+# 2-amalgamate: every safe knob stacked (AOT + full trim + reflection off + size optimization)
+cd 2-amalgamate
 ./build.ps1
 ```
 

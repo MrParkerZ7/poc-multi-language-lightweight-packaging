@@ -1,6 +1,6 @@
 # POC: Multi-Language Lightweight Packaging
 
-A 30-second exec-friendly comparison of how small a **production CLI deployment** can get across the top mainstream programming languages — covering 26 variants across 6 languages, with both **artifact size** and **container image size** measured per variant. Every variant ships its own multi-stage `Dockerfile` so you can produce real numbers without installing toolchains locally.
+A 30-second exec-friendly comparison of how small a **production CLI deployment** can get across the top mainstream programming languages — covering 32 variants across 6 languages, organized into three tiers (`0-before-*` naive baseline, `1-after-*` individual technique, `2-amalgamate` every-knob-stacked). Both **artifact size** and **container image size** measured per variant. Every variant ships its own multi-stage `Dockerfile` so you can produce real numbers without installing toolchains locally.
 
 ---
 
@@ -13,27 +13,33 @@ A 30-second exec-friendly comparison of how small a **production CLI deployment*
 | Java / Kotlin (GraalVM native) | 28 MB | **12 MB** | **~25 MB** (debian-slim) | **No** | **~25 ms** |
 | Java / Kotlin (Spring Native) | 28 MB | 60 MB | ~70 MB (debian-slim) | **No** | ~35 ms |
 | Java / Kotlin (Quarkus native) | 28 MB | 50 MB | ~60 MB (debian-slim) | **No** | **~20 ms** |
+| **Java / Kotlin (2-amalgamate)** | 28 MB | **~10 MB** | **~12 MB** (debian-slim) | **No** | **~20 ms** |
 | C# / .NET (self-contained — naive) | 72 MB | — | ~80 MB (alpine runtime-deps) | **No** | ~80 ms |
 | C# / .NET (PublishTrimmed) | 72 MB | 25 MB | ~35 MB (alpine runtime-deps) | **No** | ~60 ms |
 | C# / .NET (ReadyToRun) | 72 MB | 75 MB | ~85 MB (alpine runtime-deps) | **No** | ~50 ms |
 | C# / .NET (AOT) | 72 MB | **11 MB** | **~15 MB** (alpine runtime-deps) | **No** | **~18 ms** |
+| **C# / .NET (2-amalgamate)** | 72 MB | **~9 MB** | **~13 MB** (alpine runtime-deps) | **No** | **~15 ms** |
 | Python (venv + deps — naive) | 84 MB | — | ~150 MB (python:3.11-slim) | Yes (Python) | ~70 ms |
 | Python (zipapp) | 84 MB | 1.2 MB | ~50 MB (python:3.11-alpine) | Yes (Python 3.11+) | ~70 ms |
 | Python (PyInstaller) | 84 MB | 9.8 MB | ~80 MB (debian-slim + glibc) | **No** | ~110 ms |
 | Python (Nuitka) | 84 MB | **8 MB** | ~80 MB (debian-slim + glibc) | **No** | ~50 ms |
 | Python (PEX) | 84 MB | 1 MB | ~50 MB (python:3.11-alpine) | Yes (Python 3.x) | ~80 ms |
+| **Python (2-amalgamate)** | 84 MB | **~7 MB** | **~10 MB** (debian-slim) | **No** | **~45 ms** |
 | Node / TypeScript (npm + tsc — naive) | 200 MB | — | ~250 MB (node:20-alpine + node_modules) | Yes (Node) | ~120 ms |
 | Node / TypeScript (esbuild) | 200 MB | **1.5 MB** | ~45 MB (node:20-alpine) | Yes (Node 20+) | ~80 ms |
 | Node / TypeScript (esbuild + llrt) | 200 MB | 12 MB | **~12 MB** (debian-slim) | **No** | ~30 ms |
 | Node / TypeScript (webpack) | 200 MB | 2 MB | ~45 MB (node:20-alpine) | Yes (Node 20+) | ~90 ms |
 | Node / TypeScript (@vercel/ncc) | 200 MB | 2.5 MB | ~45 MB (node:20-alpine) | Yes (Node 20+) | ~85 ms |
 | Node / TypeScript (bun --compile) | 200 MB | 60 MB | ~70 MB (debian-slim) | **No** | ~30 ms |
+| **Node / TypeScript (2-amalgamate)** | 200 MB | **~6 MB** | **~7 MB** (debian-slim) | **No** | **~25 ms** |
 | Go (default) | 8 MB | — | **~10 MB** (FROM scratch) | **No** | ~5 ms |
 | Go (strip + UPX) | 8 MB | **1.5 MB** | **~2 MB** (FROM scratch) | **No** | ~4 ms |
 | Go (TinyGo) | 8 MB | **0.5 MB** | **~0.6 MB** (FROM scratch) | **No** | ~4 ms |
+| **Go (2-amalgamate)** | 8 MB | **~0.2 MB** | **~0.3 MB** (FROM scratch) | **No** | ~5 ms |
 | Rust (default) | 6 MB | — | ~7 MB (FROM scratch) | **No** | ~3 ms |
 | Rust (opt-z + UPX) | 6 MB | **400 KB** | **~0.5 MB** (FROM scratch) | **No** | ~2 ms |
 | Rust (musl static) | 6 MB | 4 MB | ~4 MB (FROM scratch) | **No** | ~3 ms |
+| **Rust (2-amalgamate)** | 6 MB | **~0.3 MB** | **~0.3 MB** (FROM scratch) | **No** | ~5 ms |
 
 > Numbers are illustrative target ranges based on the trivial CLI in this POC. Run `pwsh ./build-all.ps1` (or each `build.ps1`) for artifact sizes; `pwsh ./docker-build-all.ps1` for container images.
 
@@ -69,7 +75,7 @@ Practical note for AOT-style variants (Java GraalVM, C# AOT, Rust size-tuned): t
 ## Visual A — Whole project on disk
 
 Total variant folder size after build. Includes build caches — substantial for AOT/native pipelines.
-Picks the *best lightweight variant* per language (smallest shipping artifact); see TL;DR headline for the full 26-row table.
+Picks the *best lightweight variant* per language (smallest shipping artifact); see TL;DR headline for the full 32-row table.
 
 ```
                                   Before (naive)                  After (best-per-lang)
@@ -91,7 +97,7 @@ Rust       default / size profile ███████████████�
 
 ## Visual B — Packaged deployment artifact
 
-What actually ships to a production host. Picks the *smallest viable* variant per language; see TL;DR headline for the full 26-row table including alternatives (jlink, Spring Native, Quarkus, R2R, Nuitka, PEX, webpack, ncc, bun-compile, musl-static).
+What actually ships to a production host. Picks the *smallest viable* variant per language; see TL;DR headline for the full 32-row table including alternatives (jlink, Spring Native, Quarkus, R2R, Nuitka, PEX, webpack, ncc, bun-compile, musl-static, plus 2-amalgamate which stacks every safe knob per language).
 
 ```
                                   Before                          After (best-per-lang)
@@ -123,12 +129,13 @@ Rust       opt-z + UPX            ▏                ~0.5 MB   (FROM scratch)
 
 ## What this POC demonstrates
 
-Each language folder contains one or more **`<before|after>-<solution>/`** sub-folders, where:
+Each language folder contains three tiers of variants:
 
-1. **`before-<solution>/`** — the *naive default* deployment for that language (e.g., `0-before-spring-boot-fat-jar/`, `0-before-npm-tsc/`). What most teams ship without thinking about size.
-2. **`after-<solution>/`** — an *optimized* deployment using a specific technique (e.g., `1-after-graalvm-native/`, `1-after-esbuild/`). Each language has 1–4 of these, named after the technique applied.
+1. **`0-before-<solution>/`** — the *naive default* deployment for that language (e.g., `0-before-spring-boot-fat-jar/`, `0-before-npm-tsc/`). What most teams ship without thinking about size.
+2. **`1-after-<solution>/`** — an *individual optimization technique* (e.g., `1-after-graalvm-native/`, `1-after-esbuild/`). Each language has 1–5 of these, each isolating one technique so you can compare them side by side.
+3. **`2-amalgamate/`** — *every applicable technique stacked* on the same source: native compile + size flags + UPX (where compatible) + `FROM scratch` container. The smallest reasonable deployment shape achievable per language, all knobs in the same direction.
 
-The folder name tells you the technique at a glance — no need to open the README to know what `csharp/1-after-aot/` or `node/1-after-esbuild-llrt/` is. The `before-` / `after-` prefix also groups all naive baselines together when listed alphabetically.
+The numeric prefix forces useful sort order: when you `ls` a language folder, the naive baseline appears first, individual optimizations next, and the amalgamated "everything stacked" at the bottom. The folder name after the prefix tells you the technique at a glance — no need to open the README to know what `csharp/1-after-aot/` or `node/1-after-esbuild-llrt/` is.
 
 Every variant folder includes a **`Dockerfile`** alongside the source + build script — multi-stage build that compiles inside Docker (no local toolchain needed) and ships the smallest reasonable image (`FROM scratch` where possible, alpine/distroless otherwise).
 
@@ -185,20 +192,23 @@ poc-multi-language-lightweight-packaging/
 │   ├── 1-after-jlink/                       ← jlink modular runtime image
 │   ├── 1-after-graalvm-native/              ← GraalVM native (plain Java)
 │   ├── 1-after-spring-native/               ← Spring Boot 3 + GraalVM
-│   └── 1-after-quarkus-native/              ← Quarkus native-first framework
+│   ├── 1-after-quarkus-native/              ← Quarkus native-first framework
+│   └── 2-amalgamate/                        ← stack every safe knob (GraalVM + size flags + scratch)
 ├── csharp/
 │   ├── README.md
 │   ├── 0-before-self-contained/             ← default self-contained (naive baseline)
 │   ├── 1-after-trimmed/                     ← PublishTrimmed (no AOT)
 │   ├── 1-after-r2r/                         ← ReadyToRun precompiled
-│   └── 1-after-aot/                         ← Native AOT trimmed
+│   ├── 1-after-aot/                         ← Native AOT trimmed
+│   └── 2-amalgamate/                        ← stack every safe knob (AOT + trim + reflection-off + size-opt)
 ├── python/
 │   ├── README.md
 │   ├── 0-before-venv-deps/                  ← venv + deps (naive baseline)
 │   ├── 1-after-zipapp/                      ← zipapp (needs Python)
 │   ├── 1-after-pyinstaller/                 ← PyInstaller onefile
 │   ├── 1-after-nuitka/                      ← Nuitka (Python → C → native)
-│   └── 1-after-pex/                         ← PEX (zipapp+)
+│   ├── 1-after-pex/                         ← PEX (zipapp+)
+│   └── 2-amalgamate/                        ← stack every safe knob (Nuitka + LTO + size flags + scratch)
 ├── node/
 │   ├── README.md
 │   ├── 0-before-npm-tsc/                    ← npm install + tsc (naive baseline)
@@ -206,17 +216,20 @@ poc-multi-language-lightweight-packaging/
 │   ├── 1-after-esbuild-llrt/                ← esbuild + AWS llrt
 │   ├── 1-after-webpack/                     ← webpack + Terser
 │   ├── 1-after-ncc/                         ← @vercel/ncc
-│   └── 1-after-bun-compile/                 ← bun --compile single binary
+│   ├── 1-after-bun-compile/                 ← bun --compile single binary
+│   └── 2-amalgamate/                        ← stack every safe knob (esbuild + UPX-llrt + scratch)
 ├── go/
 │   ├── README.md
 │   ├── 0-before-default-build/              ← default go build (naive baseline)
 │   ├── 1-after-strip-upx/                   ← strip + UPX
-│   └── 1-after-tinygo/                      ← TinyGo compiler (smaller stdlib)
+│   ├── 1-after-tinygo/                      ← TinyGo compiler (smaller stdlib)
+│   └── 2-amalgamate/                        ← stack every safe knob (TinyGo + opt=z + UPX + scratch)
 └── rust/
     ├── README.md
     ├── 0-before-default-release/            ← default cargo build --release (naive baseline)
     ├── 1-after-size-profile-upx/            ← opt-z + LTO + strip + UPX
-    └── 1-after-musl-static/                 ← musl static (Linux, FROM scratch ready)
+    ├── 1-after-musl-static/                 ← musl static (Linux, FROM scratch ready)
+    └── 2-amalgamate/                        ← stack every safe knob (musl + opt-z + LTO=fat + UPX + scratch)
 ```
 
 ---
@@ -294,13 +307,13 @@ The Dockerfiles use multi-stage builds — compilation happens in a build-toolin
 
 | Language | Variants scaffolded | Built locally | Numbers verified | Docker images verified |
 |----------|:-------------------:|:-------------:|:----------------:|:----------------------:|
-| Java / Kotlin (5 variants) | ✅ | ⏳ | ⏳ | ⏳ |
-| C# (4 variants) | ✅ | ⏳ | ⏳ | ⏳ |
-| Python (5 variants) | ✅ | ⏳ | ⏳ | ⏳ |
-| Node / TypeScript (6 variants) | ✅ | ⏳ | ⏳ | ⏳ |
-| Go (3 variants) | ✅ | ⏳ | ⏳ | ⏳ |
-| Rust (3 variants) | ✅ | ⏳ | ⏳ | ⏳ |
-| **Total** | **26 variants** | | | |
+| Java / Kotlin (6 variants: 1 + 4 + 1 amalgamate) | ✅ | ⏳ | ⏳ | ⏳ |
+| C# (5 variants: 1 + 3 + 1 amalgamate) | ✅ | ⏳ | ⏳ | ⏳ |
+| Python (6 variants: 1 + 4 + 1 amalgamate) | ✅ | ⏳ | ⏳ | ⏳ |
+| Node / TypeScript (7 variants: 1 + 5 + 1 amalgamate) | ✅ | ⏳ | ⏳ | ⏳ |
+| Go (4 variants: 1 + 2 + 1 amalgamate) | ✅ | ⏳ | ⏳ | ⏳ |
+| Rust (4 variants: 1 + 2 + 1 amalgamate) | ✅ | ⏳ | ⏳ | ⏳ |
+| **Total** | **32 variants** (6 baseline + 20 individual + 6 amalgamate) | | | |
 
 Numbers in the TL;DR headline table (artifact + container image) are **target estimates** until you run:
 

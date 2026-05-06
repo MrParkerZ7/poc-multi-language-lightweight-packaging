@@ -19,6 +19,7 @@ For exec audiences this becomes the most dramatic "after" in the table: ~400 KB 
 | `0-before-default-release/` | `app.exe` (default `cargo build --release`) | ~4–6 MB | **No** (always) | ~3 ms | Default release build |
 | `1-after-size-profile-upx/` | `app.exe` (opt-z + LTO + strip + UPX) | **~400 KB** | **No** | ~2 ms | `opt-level="z"`, `lto=true`, `strip=true`, `panic="abort"`, `codegen-units=1`, then UPX |
 | `1-after-musl-static/` | `app` (Linux musl static, no UPX) | ~4 MB | **No** | ~3 ms | `cargo build --target x86_64-unknown-linux-musl` — fully-static Linux binary, ready for `FROM scratch` Docker (no AV-flag risk like UPX) |
+| `2-amalgamate/` | musl + every Cargo size knob + UPX | **~0.3 MB** | **No** | ~5 ms | musl target + `opt-level=z` + `lto=fat` + `codegen-units=1` + `panic=abort` + `strip=symbols` + `overflow-checks=false` + UPX (stacked). The smallest reasonable Rust deployment. |
 
 ## Why is "before" already lightweight?
 
@@ -47,6 +48,10 @@ cd 1-after-size-profile-upx
 # musl static (Linux ELF, no UPX, FROM scratch ready)
 cd 1-after-musl-static
 ./build.ps1   # requires `rustup target add x86_64-unknown-linux-musl` (auto-runs)
+
+# 2-amalgamate: musl + every Cargo size knob + UPX + scratch
+cd 2-amalgamate
+./build.ps1
 ```
 
 ## Prerequisites

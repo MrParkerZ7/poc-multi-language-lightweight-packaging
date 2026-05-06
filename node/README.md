@@ -25,6 +25,7 @@ The trade is API coverage: llrt implements a subset of Node APIs (most stdlib, b
 | `1-after-webpack/` | `dist/app.cjs` (webpack + Terser) | ~2 MB | **Yes** (Node 20+) | ~90 ms | Webpack — industry-standard predecessor to esbuild; more config, slower build |
 | `1-after-ncc/` | `dist/index.js` (@vercel/ncc) | ~2.5 MB | **Yes** (Node 20+) | ~85 ms | `@vercel/ncc` — zero-config Node bundler, sane defaults |
 | `1-after-bun-compile/` | `dist/app.exe` (bun --compile) | ~60 MB | **No** (bun runtime bundled) | ~30 ms | `bun build --compile` — single binary with bun runtime; Node-API compatible (where llrt is a subset) |
+| `2-amalgamate/` | esbuild max-minify + UPX-compressed llrt | **~6 MB** | **No** | **~25 ms** | esbuild bundle (max minify, no Node-only APIs) + AWS llrt + UPX-compress llrt itself + scratch container (stacked). |
 
 ## Why three variants?
 
@@ -63,6 +64,10 @@ cd 1-after-ncc
 # bun --compile (single binary, Node-API compatible)
 cd 1-after-bun-compile
 ./build.ps1   # requires bun installed: https://bun.sh/
+
+# 2-amalgamate: esbuild max-minify + UPX-compressed llrt + scratch
+cd 2-amalgamate
+./build.ps1
 ```
 
 ## Prerequisites

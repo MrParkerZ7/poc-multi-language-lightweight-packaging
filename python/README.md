@@ -24,6 +24,7 @@ Both are legitimately deployed in production. The exec choice is "do we already 
 | `1-after-pyinstaller/` | `app.exe` (PyInstaller) | **~9.8 MB** | **No** | ~110 ms | `pyinstaller --onefile` — bundles a stripped Python interpreter |
 | `1-after-nuitka/` | `app.exe` (Nuitka onefile) | **~8 MB** | **No** | ~50 ms | `nuitka --onefile` — actually compiles Python → C → native binary; smaller and faster than PyInstaller |
 | `1-after-pex/` | `app.pex` (PEX) | ~1 MB | **Yes** (Python 3.x) | ~80 ms | Twitter/Pants's "zipapp on steroids" — single .pex file with vendored deps |
+| `2-amalgamate/` | Nuitka onefile + LTO + every size flag | **~7 MB** | **No** | **~45 ms** | `nuitka --onefile --lto=yes --no-pyi-file --remove-output` (stacked). UPX skipped — Nuitka onefile uses self-extraction; UPX can break it. |
 
 ## Why three variants?
 
@@ -55,6 +56,10 @@ cd 1-after-nuitka
 
 # PEX (zipapp+, single .pex file)
 cd 1-after-pex
+./build.ps1
+
+# 2-amalgamate: Nuitka with LTO + every size flag stacked
+cd 2-amalgamate
 ./build.ps1
 ```
 

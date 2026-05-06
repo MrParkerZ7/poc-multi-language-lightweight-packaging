@@ -23,6 +23,7 @@ For those cases, stripping symbols and UPX-compressing brings Go to ~1.5 MB with
 | `0-before-default-build/` | `app.exe` (default `go build`) | ~6–8 MB | **No** (always) | ~5 ms | Default `go build` — already a single static binary |
 | `1-after-strip-upx/` | `app.exe` (stripped + UPX-compressed) | **~1.5 MB** | **No** | ~4 ms | `go build -ldflags="-s -w" -trimpath` + `upx --best --lzma` |
 | `1-after-tinygo/` | `app.exe` (TinyGo compiler) | **~0.5 MB** | **No** | ~4 ms | `tinygo build -opt=z` — alternative compiler, much smaller; trade-off: smaller stdlib coverage |
+| `2-amalgamate/` | TinyGo + opt=z + UPX | **~0.2 MB** | **No** | ~5 ms | TinyGo with `-opt=z -no-debug` then UPX `--best --lzma`, ships from `FROM scratch`. Note: UPX adds ~5–20 ms decompression to cold-start. |
 
 ## Why is "before" already lightweight?
 
@@ -48,6 +49,10 @@ cd 1-after-strip-upx
 # TinyGo compiler (much smaller, but smaller stdlib coverage)
 cd 1-after-tinygo
 ./build.ps1   # requires tinygo: https://tinygo.org/
+
+# 2-amalgamate: TinyGo + opt=z + UPX + scratch
+cd 2-amalgamate
+./build.ps1
 ```
 
 ## Prerequisites

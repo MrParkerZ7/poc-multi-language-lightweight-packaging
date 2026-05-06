@@ -1,0 +1,18 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/main.ts --bundle --minify --tree-shaking=true --drop:console=false --legal-comments=none --platform=browser --target=es2022 --format=esm --outfile=dist/app.mjs"
+  },
+  "dependencies": {
+    "dayjs": "^1.11.10",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "@types/uuid": "^9.0.8",
+    "esbuild": "^0.20.2",
+    "typescript": "^5.4.3"
+  }
+}

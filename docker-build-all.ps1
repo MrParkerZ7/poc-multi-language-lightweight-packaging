@@ -1,8 +1,5 @@
 # docker-build-all.ps1 — build a Docker image for every variant and report image size
 # Usage: ./docker-build-all.ps1
-#
-# Tags each image as poc-lightweight/<lang>-<variant>:latest
-# Prints final image sizes at the end. Skips variants whose Dockerfile is missing.
 
 $ErrorActionPreference = "Continue"
 $root = $PSScriptRoot
@@ -13,30 +10,35 @@ $variants = @(
     @{ Path = "java-kotlin/1-after-graalvm-native"       ; Tag = "poc-lightweight/java-graalvm-native"       },
     @{ Path = "java-kotlin/1-after-spring-native"        ; Tag = "poc-lightweight/java-spring-native"        },
     @{ Path = "java-kotlin/1-after-quarkus-native"       ; Tag = "poc-lightweight/java-quarkus-native"       },
+    @{ Path = "java-kotlin/2-amalgamate"                 ; Tag = "poc-lightweight/java-amalgamate"           },
     @{ Path = "csharp/0-before-self-contained"           ; Tag = "poc-lightweight/csharp-self-contained"     },
     @{ Path = "csharp/1-after-trimmed"                   ; Tag = "poc-lightweight/csharp-trimmed"            },
     @{ Path = "csharp/1-after-r2r"                       ; Tag = "poc-lightweight/csharp-r2r"                },
     @{ Path = "csharp/1-after-aot"                       ; Tag = "poc-lightweight/csharp-aot"                },
+    @{ Path = "csharp/2-amalgamate"                      ; Tag = "poc-lightweight/csharp-amalgamate"         },
     @{ Path = "python/0-before-venv-deps"                ; Tag = "poc-lightweight/python-venv-deps"          },
     @{ Path = "python/1-after-zipapp"                    ; Tag = "poc-lightweight/python-zipapp"             },
     @{ Path = "python/1-after-pyinstaller"               ; Tag = "poc-lightweight/python-pyinstaller"        },
     @{ Path = "python/1-after-nuitka"                    ; Tag = "poc-lightweight/python-nuitka"             },
     @{ Path = "python/1-after-pex"                       ; Tag = "poc-lightweight/python-pex"                },
+    @{ Path = "python/2-amalgamate"                      ; Tag = "poc-lightweight/python-amalgamate"         },
     @{ Path = "node/0-before-npm-tsc"                    ; Tag = "poc-lightweight/node-npm-tsc"              },
     @{ Path = "node/1-after-esbuild"                     ; Tag = "poc-lightweight/node-esbuild"              },
     @{ Path = "node/1-after-esbuild-llrt"                ; Tag = "poc-lightweight/node-esbuild-llrt"         },
     @{ Path = "node/1-after-webpack"                     ; Tag = "poc-lightweight/node-webpack"              },
     @{ Path = "node/1-after-ncc"                         ; Tag = "poc-lightweight/node-ncc"                  },
     @{ Path = "node/1-after-bun-compile"                 ; Tag = "poc-lightweight/node-bun-compile"          },
+    @{ Path = "node/2-amalgamate"                        ; Tag = "poc-lightweight/node-amalgamate"           },
     @{ Path = "go/0-before-default-build"                ; Tag = "poc-lightweight/go-default-build"          },
     @{ Path = "go/1-after-strip-upx"                     ; Tag = "poc-lightweight/go-strip-upx"              },
     @{ Path = "go/1-after-tinygo"                        ; Tag = "poc-lightweight/go-tinygo"                 },
+    @{ Path = "go/2-amalgamate"                          ; Tag = "poc-lightweight/go-amalgamate"             },
     @{ Path = "rust/0-before-default-release"            ; Tag = "poc-lightweight/rust-default-release"      },
     @{ Path = "rust/1-after-size-profile-upx"            ; Tag = "poc-lightweight/rust-size-profile-upx"     },
-    @{ Path = "rust/1-after-musl-static"                 ; Tag = "poc-lightweight/rust-musl-static"          }
+    @{ Path = "rust/1-after-musl-static"                 ; Tag = "poc-lightweight/rust-musl-static"          },
+    @{ Path = "rust/2-amalgamate"                        ; Tag = "poc-lightweight/rust-amalgamate"           }
 )
 
-# Verify Docker is available
 $docker = Get-Command docker -ErrorAction SilentlyContinue
 if (-not $docker) { throw "docker not found on PATH. Install Docker Desktop or Docker Engine first." }
 
