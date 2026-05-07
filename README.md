@@ -78,6 +78,34 @@ Practical note for AOT-style variants (Java GraalVM, C# AOT, Rust size-tuned): t
 
 ---
 
+## Dependencies shipped per variant
+
+A size delta is most meaningful when every variant within a language ships the **same source code with the same dependencies**, so the number is purely a packaging-technique delta. Three of six languages here meet that bar across all variants; three deviate, for reasons that are themselves part of the optimization story.
+
+| Language | Variant tier(s) | Deps declared | Source uses | Comparison shape |
+|----------|----------------|---------------|------------|------------------|
+| **C#** | all 6 | none (BCL only) | `System.Text.Json`, `System.Guid` | apples-to-apples across all variants |
+| **Go** | all 5 | `github.com/google/uuid` | `encoding/json`, `uuid` | apples-to-apples across all variants |
+| **Rust** | all 5 | `serde`, `serde_json`, `uuid`, `chrono` | identical | apples-to-apples across all variants |
+| **Java** | `0-standard-spring-boot-fat-jar`, `1-optimize-spring-native` | Spring Boot starter (heavy) + Jackson | `@SpringBootApplication` + Jackson | naive shows realistic enterprise weight; Spring Native demonstrates AOT-compiled Spring |
+| **Java** | `1-optimize-quarkus-native` | Quarkus + picocli | Quarkus framework + Jackson | demonstrates the Quarkus framework specifically |
+| **Java** | `1-optimize-jlink`, `1-optimize-graalvm-native`, `2-amalgamate-graalvm-native`, `3-best-epsilon-gc` | `jackson-databind 2.17.0` only | identical source | apples-to-apples within plain-Java variants |
+| **Python** | `0-standard-venv-deps` | `requests`, `rich` (heavy, transitive ~15 MB) | imported but lightly used (realistic enterprise weight) | naive shows realistic enterprise weight |
+| **Python** | all 6 optimized variants | none | stdlib-only (`json`, `uuid`, `datetime`) | apples-to-apples among optimized; the naive→optimized delta = packaging + dep audit |
+| **Node** | `0-standard-npm-tsc`, `1-optimize-esbuild`, `1-optimize-ncc`, `1-optimize-webpack`, `1-optimize-bun-compile` | `axios`, `dayjs`, `uuid`, `zod` | identical source (axios+zod imported, lightly used) | apples-to-apples among Node-runtime variants |
+| **Node** | `1-optimize-esbuild-llrt`, `2-amalgamate-llrt` | `dayjs`, `uuid` | uses Web Crypto + `Date` (no `axios`, no `zod`) | runtime constraint — llrt is JS-subset; can't run Node-only deps |
+| **Node** | `3-best-quickjs` | none | pure ECMAScript (manual UUIDv4, manual ISO format) | runtime constraint — QuickJS-NG has no host APIs at all |
+
+**Reading the size deltas correctly:**
+
+- Within an apples-to-apples group (C# / Go / Rust / Java plain / Python optimized / Node-runtime), the size delta is **pure packaging-technique** improvement.
+- Where a variant ships a different dep set, the delta is **packaging + dep trimming**. That mixed delta is honest because dropping unneeded deps is what teams actually do when they optimize — the measurement reflects real operational practice, not just bundler tricks.
+- For Node llrt (`-llrt`) and QuickJS-NG (`-quickjs`), the deps are dropped because the runtime literally cannot run them, not because we chose to. The Trade clause on those rows in Visual B already names this constraint.
+
+If you want a strict packaging-only delta with zero confounding factors, look at C# / Go / Rust — those are the cleanest comparisons. Java/Python/Node deltas are larger but include real-world dep-audit savings on top of packaging.
+
+---
+
 ## Visual A — Whole project on disk
 
 Total variant folder size after build. Includes build caches — substantial for AOT/native pipelines.
