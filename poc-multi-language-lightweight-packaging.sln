@@ -4,13 +4,13 @@ VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "csharp", "csharp", "{B41BF331-FCCB-2ADF-CDB6-767964B34647}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "1-after-aot", "1-after-aot", "{58359BCB-FBF9-FBB6-E9F8-B87634B5900F}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "1-optimize-aot", "1-optimize-aot", "{58359BCB-FBF9-FBB6-E9F8-B87634B5900F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "app", "csharp\1-after-aot\app.csproj", "{44F50781-381D-6D70-B414-6DDBB0BA4D7B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "app", "csharp\1-optimize-aot\app.csproj", "{44F50781-381D-6D70-B414-6DDBB0BA4D7B}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "0-before-self-contained", "0-before-self-contained", "{A0E9DF25-C086-4651-6CB5-C8E819DDF801}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "0-standard-self-contained", "0-standard-self-contained", "{A0E9DF25-C086-4651-6CB5-C8E819DDF801}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "app", "csharp\0-before-self-contained\app.csproj", "{D74C027D-D9BB-8066-5B7A-F4BBEB7F9F65}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "app", "csharp\0-standard-self-contained\app.csproj", "{D74C027D-D9BB-8066-5B7A-F4BBEB7F9F65}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

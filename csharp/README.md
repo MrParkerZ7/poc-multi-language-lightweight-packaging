@@ -14,12 +14,12 @@ So C# inherits the same dual-cost shape as Java, just with different numbers —
 
 | Variant | Artifact | Target size | Runtime needed on host? | Cold-start | Technique |
 |---------|----------|------------:|:------------------------|-----------:|-----------|
-| `0-before-self-contained/` | self-contained .exe + folder | ~72 MB | **No** (full .NET runtime bundled) | ~80 ms | Default `dotnet publish -r win-x64 --self-contained -p:PublishSingleFile=true` |
-| `1-after-trimmed/` | trimmed self-contained | ~25 MB | **No** | ~60 ms | `PublishTrimmed=true` — drops unused IL, keeps JIT runtime; full reflection still works on referenced types |
-| `1-after-r2r/` | ReadyToRun precompiled | ~75 MB | **No** | ~50 ms | `PublishReadyToRun=true` — precompiles IL→native at publish; faster cold-start, slightly larger |
-| `1-after-aot/` | Native AOT single .exe | **~11 MB** | **No** | **~18 ms** | `PublishAot=true` (.NET 8+) — full AOT compile, smallest + fastest |
-| `2-amalgamate/` | Native AOT + every safe knob | **~9 MB** | **No** | **~15 ms** | AOT + `TrimMode=full` + `IlcDisableReflection` + `OptimizationPreference=Size` + EventSource/Metrics/Debugger off + `IlcFoldIdenticalMethodBodies` (stacked). UPX skipped — known incompatibility with .NET AOT loader. |
-| `3-best/` | AOT + every above flag + extra trim + stack-trace data off | **~5 MB** | **No** | **~12 ms** | Adds `IlcGenerateStackTraceData=false` + `StackTraceSupport=false` + `BuiltInComInteropSupport=false` + `NullabilityInfoContextSupport=false` + `_AggressiveAttributeTrimming=true`. **Trade**: no stack traces on crash; uses internal MSBuild flags pinned to .NET 8. |
+| `0-standard-self-contained/` | self-contained .exe + folder | ~72 MB | **No** (full .NET runtime bundled) | ~80 ms | Default `dotnet publish -r win-x64 --self-contained -p:PublishSingleFile=true` |
+| `1-optimize-trimmed/` | trimmed self-contained | ~25 MB | **No** | ~60 ms | `PublishTrimmed=true` — drops unused IL, keeps JIT runtime; full reflection still works on referenced types |
+| `1-optimize-r2r/` | ReadyToRun precompiled | ~75 MB | **No** | ~50 ms | `PublishReadyToRun=true` — precompiles IL→native at publish; faster cold-start, slightly larger |
+| `1-optimize-aot/` | Native AOT single .exe | **~11 MB** | **No** | **~18 ms** | `PublishAot=true` (.NET 8+) — full AOT compile, smallest + fastest |
+| `2-amalgamate-aot/` | Native AOT + every safe knob | **~9 MB** | **No** | **~15 ms** | AOT + `TrimMode=full` + `IlcDisableReflection` + `OptimizationPreference=Size` + EventSource/Metrics/Debugger off + `IlcFoldIdenticalMethodBodies` (stacked). UPX skipped — known incompatibility with .NET AOT loader. |
+| `3-best-max-trim/` | AOT + every above flag + extra trim + stack-trace data off | **~5 MB** | **No** | **~12 ms** | Adds `IlcGenerateStackTraceData=false` + `StackTraceSupport=false` + `BuiltInComInteropSupport=false` + `NullabilityInfoContextSupport=false` + `_AggressiveAttributeTrimming=true`. **Trade**: no stack traces on crash; uses internal MSBuild flags pinned to .NET 8. |
 
 ## Why no separate "no runtime" variant for C#?
 
@@ -34,27 +34,27 @@ For most modern CLI/microservice workloads, AOT is the right answer in 2026. For
 
 ```powershell
 # Self-contained (naive baseline)
-cd 0-before-self-contained
+cd 0-standard-self-contained
 ./build.ps1
 
 # PublishTrimmed (no AOT) — middle ground
-cd 1-after-trimmed
+cd 1-optimize-trimmed
 ./build.ps1
 
 # ReadyToRun precompiled (faster cold-start, slightly larger)
-cd 1-after-r2r
+cd 1-optimize-r2r
 ./build.ps1
 
 # Native AOT (~6× smaller, ~4× faster cold-start)
-cd 1-after-aot
+cd 1-optimize-aot
 ./build.ps1
 
 # 2-amalgamate: every safe knob stacked (AOT + full trim + reflection off + size optimization)
-cd 2-amalgamate
+cd 2-amalgamate-aot
 ./build.ps1
 
 # 3-best: every 2-amalgamate flag + extra trim + stack-trace off (smallest possible)
-cd 3-best
+cd 3-best-max-trim
 ./build.ps1
 ```
 

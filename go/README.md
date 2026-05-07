@@ -20,11 +20,11 @@ For those cases, stripping symbols and UPX-compressing brings Go to ~1.5 MB with
 
 | Variant | Artifact | Target size | Runtime needed on host? | Cold-start | Technique |
 |---------|----------|------------:|:------------------------|-----------:|-----------|
-| `0-before-default-build/` | `app.exe` (default `go build`) | ~6–8 MB | **No** (always) | ~5 ms | Default `go build` — already a single static binary |
-| `1-after-strip-upx/` | `app.exe` (stripped + UPX-compressed) | **~1.5 MB** | **No** | ~4 ms | `go build -ldflags="-s -w" -trimpath` + `upx --best --lzma` |
-| `1-after-tinygo/` | `app.exe` (TinyGo compiler) | **~0.5 MB** | **No** | ~4 ms | `tinygo build -opt=z` — alternative compiler, much smaller; trade-off: smaller stdlib coverage |
-| `2-amalgamate/` | TinyGo + opt=z + UPX | **~0.2 MB** | **No** | ~5 ms | TinyGo with `-opt=z -no-debug` then UPX `--best --lzma`, ships from `FROM scratch`. Note: UPX adds ~5–20 ms decompression to cold-start. |
-| `3-best/` | TinyGo + leaking GC + no scheduler + panic-trap + UPX-LZMA | **~0.12 MB** | **No** | ~6 ms | Adds `-gc=leaking` (no GC, leak everything) + `-scheduler=none` (single-threaded) + `-panic=trap` (silent crash). **Trade**: single-shot CLI only — must exit cleanly to release memory; no goroutines; crashes silently. |
+| `0-standard-default-build/` | `app.exe` (default `go build`) | ~6–8 MB | **No** (always) | ~5 ms | Default `go build` — already a single static binary |
+| `1-optimize-strip-upx/` | `app.exe` (stripped + UPX-compressed) | **~1.5 MB** | **No** | ~4 ms | `go build -ldflags="-s -w" -trimpath` + `upx --best --lzma` |
+| `1-optimize-tinygo/` | `app.exe` (TinyGo compiler) | **~0.5 MB** | **No** | ~4 ms | `tinygo build -opt=z` — alternative compiler, much smaller; trade-off: smaller stdlib coverage |
+| `2-amalgamate-tinygo/` | TinyGo + opt=z + UPX | **~0.2 MB** | **No** | ~5 ms | TinyGo with `-opt=z -no-debug` then UPX `--best --lzma`, ships from `FROM scratch`. Note: UPX adds ~5–20 ms decompression to cold-start. |
+| `3-best-leaking-gc/` | TinyGo + leaking GC + no scheduler + panic-trap + UPX-LZMA | **~0.12 MB** | **No** | ~6 ms | Adds `-gc=leaking` (no GC, leak everything) + `-scheduler=none` (single-threaded) + `-panic=trap` (silent crash). **Trade**: single-shot CLI only — must exit cleanly to release memory; no goroutines; crashes silently. |
 
 ## Why is "before" already lightweight?
 
@@ -40,31 +40,31 @@ For exec audiences, the Go row is the "no minimization needed and it's already s
 
 ```powershell
 # Default (naive baseline — already lightweight)
-cd 0-before-default-build
+cd 0-standard-default-build
 ./build.ps1
 
 # Stripped + UPX
-cd 1-after-strip-upx
+cd 1-optimize-strip-upx
 ./build.ps1
 
 # TinyGo compiler (much smaller, but smaller stdlib coverage)
-cd 1-after-tinygo
+cd 1-optimize-tinygo
 ./build.ps1   # requires tinygo: https://tinygo.org/
 
 # 2-amalgamate: TinyGo + opt=z + UPX + scratch
-cd 2-amalgamate
+cd 2-amalgamate-tinygo
 ./build.ps1
 
 # 3-best: TinyGo + leaking GC + no scheduler + panic-trap + UPX-LZMA (smallest possible)
-cd 3-best
+cd 3-best-leaking-gc
 ./build.ps1
 ```
 
 ## Prerequisites
 
 - Go 1.21 or later
-- For `1-after-strip-upx/`: UPX (https://upx.github.io/). On Windows: `choco install upx` or download the binary and put it on PATH.
-- For `1-after-tinygo/`: TinyGo (https://tinygo.org/getting-started/install/). Note: `encoding/json` and a few stdlib packages have limited support in TinyGo — verify the trivial CLI builds before relying on it for richer code.
+- For `1-optimize-strip-upx/`: UPX (https://upx.github.io/). On Windows: `choco install upx` or download the binary and put it on PATH.
+- For `1-optimize-tinygo/`: TinyGo (https://tinygo.org/getting-started/install/). Note: `encoding/json` and a few stdlib packages have limited support in TinyGo — verify the trivial CLI builds before relying on it for richer code.
 
 ## Trade-offs (for the exec)
 

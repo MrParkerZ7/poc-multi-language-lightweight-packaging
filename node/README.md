@@ -19,14 +19,14 @@ The trade is API coverage: llrt implements a subset of Node APIs (most stdlib, b
 
 | Variant | Artifact | Target size | Runtime needed on host? | Cold-start | Technique |
 |---------|----------|------------:|:------------------------|-----------:|-----------|
-| `0-before-npm-tsc/` | source + `node_modules/` + `dist/` (folder) | ~150–200 MB | **Yes** (Node 20+) | ~120 ms | Default `npm install && tsc` deployment — ship everything |
-| `1-after-esbuild/` | `dist/app.mjs` (esbuild bundle) | **~1.5 MB** | **Yes** (Node 20+) | ~80 ms | `esbuild --bundle --minify --platform=node` — single JS file with all deps tree-shaken and minified |
-| `1-after-esbuild-llrt/` | `dist/app.mjs` + AWS `llrt` binary | **~12 MB** total | **No** (llrt bundled, ~10 MB) | ~30 ms | Same esbuild bundle, executed by AWS `llrt` (Rust-based JS subset runtime) |
-| `1-after-webpack/` | `dist/app.cjs` (webpack + Terser) | ~2 MB | **Yes** (Node 20+) | ~90 ms | Webpack — industry-standard predecessor to esbuild; more config, slower build |
-| `1-after-ncc/` | `dist/index.js` (@vercel/ncc) | ~2.5 MB | **Yes** (Node 20+) | ~85 ms | `@vercel/ncc` — zero-config Node bundler, sane defaults |
-| `1-after-bun-compile/` | `dist/app.exe` (bun --compile) | ~60 MB | **No** (bun runtime bundled) | ~30 ms | `bun build --compile` — single binary with bun runtime; Node-API compatible (where llrt is a subset) |
-| `2-amalgamate/` | esbuild max-minify + UPX-compressed llrt | **~6 MB** | **No** | **~25 ms** | esbuild bundle (max minify, no Node-only APIs) + AWS llrt + UPX-compress llrt itself + scratch container (stacked). |
-| `3-best/` | esbuild + QuickJS-NG (~1 MB engine) + UPX-LZMA | **~2 MB** | **No** | **~12 ms** | Switches runtime from llrt to QuickJS-NG (pure-ECMAScript engine, ~10× smaller). Source rewritten to avoid `crypto.randomUUID` / Node APIs. **Trade**: QuickJS-NG is pure ECMAScript only — no `node:fs`, no `node:crypto`, no AWS SDK; UUIDv4 falls back to `Math.random` (not crypto-secure). |
+| `0-standard-npm-tsc/` | source + `node_modules/` + `dist/` (folder) | ~150–200 MB | **Yes** (Node 20+) | ~120 ms | Default `npm install && tsc` deployment — ship everything |
+| `1-optimize-esbuild/` | `dist/app.mjs` (esbuild bundle) | **~1.5 MB** | **Yes** (Node 20+) | ~80 ms | `esbuild --bundle --minify --platform=node` — single JS file with all deps tree-shaken and minified |
+| `1-optimize-esbuild-llrt/` | `dist/app.mjs` + AWS `llrt` binary | **~12 MB** total | **No** (llrt bundled, ~10 MB) | ~30 ms | Same esbuild bundle, executed by AWS `llrt` (Rust-based JS subset runtime) |
+| `1-optimize-webpack/` | `dist/app.cjs` (webpack + Terser) | ~2 MB | **Yes** (Node 20+) | ~90 ms | Webpack — industry-standard predecessor to esbuild; more config, slower build |
+| `1-optimize-ncc/` | `dist/index.js` (@vercel/ncc) | ~2.5 MB | **Yes** (Node 20+) | ~85 ms | `@vercel/ncc` — zero-config Node bundler, sane defaults |
+| `1-optimize-bun-compile/` | `dist/app.exe` (bun --compile) | ~60 MB | **No** (bun runtime bundled) | ~30 ms | `bun build --compile` — single binary with bun runtime; Node-API compatible (where llrt is a subset) |
+| `2-amalgamate-llrt/` | esbuild max-minify + UPX-compressed llrt | **~6 MB** | **No** | **~25 ms** | esbuild bundle (max minify, no Node-only APIs) + AWS llrt + UPX-compress llrt itself + scratch container (stacked). |
+| `3-best-quickjs/` | esbuild + QuickJS-NG (~1 MB engine) + UPX-LZMA | **~2 MB** | **No** | **~12 ms** | Switches runtime from llrt to QuickJS-NG (pure-ECMAScript engine, ~10× smaller). Source rewritten to avoid `crypto.randomUUID` / Node APIs. **Trade**: QuickJS-NG is pure ECMAScript only — no `node:fs`, no `node:crypto`, no AWS SDK; UUIDv4 falls back to `Math.random` (not crypto-secure). |
 
 ## Why three variants?
 
@@ -43,43 +43,43 @@ Node's "lightweight prod deploy" splits into two production techniques, both leg
 
 ```powershell
 # Default deployment (naive baseline)
-cd 0-before-npm-tsc
+cd 0-standard-npm-tsc
 ./build.ps1
 
 # esbuild bundle (smallest, needs Node)
-cd 1-after-esbuild
+cd 1-optimize-esbuild
 ./build.ps1
 
 # esbuild + llrt (no runtime install needed)
-cd 1-after-esbuild-llrt
+cd 1-optimize-esbuild-llrt
 ./build.ps1   # downloads llrt binary on first run
 
 # Webpack bundle (industry-standard predecessor)
-cd 1-after-webpack
+cd 1-optimize-webpack
 ./build.ps1
 
 # @vercel/ncc bundle (zero-config)
-cd 1-after-ncc
+cd 1-optimize-ncc
 ./build.ps1
 
 # bun --compile (single binary, Node-API compatible)
-cd 1-after-bun-compile
+cd 1-optimize-bun-compile
 ./build.ps1   # requires bun installed: https://bun.sh/
 
 # 2-amalgamate: esbuild max-minify + UPX-compressed llrt + scratch
-cd 2-amalgamate
+cd 2-amalgamate-llrt
 ./build.ps1
 
 # 3-best: esbuild + QuickJS-NG + UPX-LZMA + scratch (smallest possible)
-cd 3-best
+cd 3-best-quickjs
 ./build.ps1
 ```
 
 ## Prerequisites
 
 - Node 20 or later, npm
-- For `1-after-esbuild-llrt/`: the build script auto-downloads `llrt` from the AWS GitHub release. No manual install needed.
-- For `1-after-bun-compile/`: install `bun` from https://bun.sh/ (single command, Windows/macOS/Linux).
+- For `1-optimize-esbuild-llrt/`: the build script auto-downloads `llrt` from the AWS GitHub release. No manual install needed.
+- For `1-optimize-bun-compile/`: install `bun` from https://bun.sh/ (single command, Windows/macOS/Linux).
 
 ## Trade-offs (for the exec)
 
@@ -93,4 +93,4 @@ It's a JS *subset*. Pure JS code, basic stdlib (fs, http, crypto, url, buffer), 
 
 > "Can we get even smaller than 1.5 MB?"
 
-For our trivial CLI (no deps used), yes — the bundled `.mjs` would be ~5 KB. The 1.5 MB number reflects what a *real* CLI looks like once you bundle in `axios` / `zod` / `uuid` / `dayjs` (the deps in `0-before-npm-tsc/`'s `package.json`). Shows what minification actually achieves on a representative codebase, not a Hello World.
+For our trivial CLI (no deps used), yes — the bundled `.mjs` would be ~5 KB. The 1.5 MB number reflects what a *real* CLI looks like once you bundle in `axios` / `zod` / `uuid` / `dayjs` (the deps in `0-standard-npm-tsc/`'s `package.json`). Shows what minification actually achieves on a representative codebase, not a Hello World.

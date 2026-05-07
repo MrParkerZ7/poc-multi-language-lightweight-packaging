@@ -16,11 +16,11 @@ For exec audiences this becomes the most dramatic "after" in the table: ~400 KB 
 
 | Variant | Artifact | Target size | Runtime needed on host? | Cold-start | Technique |
 |---------|----------|------------:|:------------------------|-----------:|-----------|
-| `0-before-default-release/` | `app.exe` (default `cargo build --release`) | ~4–6 MB | **No** (always) | ~3 ms | Default release build |
-| `1-after-size-profile-upx/` | `app.exe` (opt-z + LTO + strip + UPX) | **~400 KB** | **No** | ~2 ms | `opt-level="z"`, `lto=true`, `strip=true`, `panic="abort"`, `codegen-units=1`, then UPX |
-| `1-after-musl-static/` | `app` (Linux musl static, no UPX) | ~4 MB | **No** | ~3 ms | `cargo build --target x86_64-unknown-linux-musl` — fully-static Linux binary, ready for `FROM scratch` Docker (no AV-flag risk like UPX) |
-| `2-amalgamate/` | musl + every Cargo size knob + UPX | **~0.3 MB** | **No** | ~5 ms | musl target + `opt-level=z` + `lto=fat` + `codegen-units=1` + `panic=abort` + `strip=symbols` + `overflow-checks=false` + UPX (stacked). The smallest reasonable Rust deployment. |
-| `3-best/` | nightly + build-std + immediate-abort + every above flag + UPX-LZMA | **~0.08 MB** | **No** | ~6 ms | Adds nightly-only `-Z build-std=std,panic_abort` + `panic_immediate_abort` + `optimize_for_size` rebuild of std, plus `-Zlocation-detail=none`, `-Zfmt-debug=none`. **Trade**: nightly Rust required; panic = silent abort with no message. |
+| `0-standard-default-release/` | `app.exe` (default `cargo build --release`) | ~4–6 MB | **No** (always) | ~3 ms | Default release build |
+| `1-optimize-size-profile-upx/` | `app.exe` (opt-z + LTO + strip + UPX) | **~400 KB** | **No** | ~2 ms | `opt-level="z"`, `lto=true`, `strip=true`, `panic="abort"`, `codegen-units=1`, then UPX |
+| `1-optimize-musl-static/` | `app` (Linux musl static, no UPX) | ~4 MB | **No** | ~3 ms | `cargo build --target x86_64-unknown-linux-musl` — fully-static Linux binary, ready for `FROM scratch` Docker (no AV-flag risk like UPX) |
+| `2-amalgamate-musl/` | musl + every Cargo size knob + UPX | **~0.3 MB** | **No** | ~5 ms | musl target + `opt-level=z` + `lto=fat` + `codegen-units=1` + `panic=abort` + `strip=symbols` + `overflow-checks=false` + UPX (stacked). The smallest reasonable Rust deployment. |
+| `3-best-build-std/` | nightly + build-std + immediate-abort + every above flag + UPX-LZMA | **~0.08 MB** | **No** | ~6 ms | Adds nightly-only `-Z build-std=std,panic_abort` + `panic_immediate_abort` + `optimize_for_size` rebuild of std, plus `-Zlocation-detail=none`, `-Zfmt-debug=none`. **Trade**: nightly Rust required; panic = silent abort with no message. |
 
 ## Why is "before" already lightweight?
 
@@ -39,31 +39,31 @@ Combined, these can turn a 5 MB default release into a ~300–500 KB binary. For
 
 ```powershell
 # Default release (naive baseline — already lightweight)
-cd 0-before-default-release
+cd 0-standard-default-release
 ./build.ps1
 
 # Aggressive size optimization + UPX
-cd 1-after-size-profile-upx
+cd 1-optimize-size-profile-upx
 ./build.ps1
 
 # musl static (Linux ELF, no UPX, FROM scratch ready)
-cd 1-after-musl-static
+cd 1-optimize-musl-static
 ./build.ps1   # requires `rustup target add x86_64-unknown-linux-musl` (auto-runs)
 
 # 2-amalgamate: musl + every Cargo size knob + UPX + scratch
-cd 2-amalgamate
+cd 2-amalgamate-musl
 ./build.ps1
 
 # 3-best: nightly + build-std + immediate-abort + UPX-LZMA (smallest possible)
-cd 3-best
+cd 3-best-build-std
 ./build.ps1   # auto-installs nightly + rust-src + musl target via rust-toolchain.toml
 ```
 
 ## Prerequisites
 
 - rustup + cargo (stable channel)
-- For `1-after-size-profile-upx/`: UPX (https://upx.github.io/)
-- For `1-after-musl-static/`: `rustup target add x86_64-unknown-linux-musl` (auto-installs in build script). Cross-compiles a Linux ELF binary even on Windows/macOS — but the artifact only runs on Linux.
+- For `1-optimize-size-profile-upx/`: UPX (https://upx.github.io/)
+- For `1-optimize-musl-static/`: `rustup target add x86_64-unknown-linux-musl` (auto-installs in build script). Cross-compiles a Linux ELF binary even on Windows/macOS — but the artifact only runs on Linux.
 
 ## Trade-offs (for the exec)
 

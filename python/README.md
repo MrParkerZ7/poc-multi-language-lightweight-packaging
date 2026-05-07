@@ -19,13 +19,13 @@ Both are legitimately deployed in production. The exec choice is "do we already 
 
 | Variant | Artifact | Target size | Runtime needed on host? | Cold-start | Technique |
 |---------|----------|------------:|:------------------------|-----------:|-----------|
-| `0-before-venv-deps/` | source + venv + deps (folder) | ~84 MB | **Yes** (Python 3.11+) | ~70 ms | Default `pip install -r requirements.txt` into a venv, ship the whole thing |
-| `1-after-zipapp/` | `app.pyz` (zipapp) | **~10 KB**–1.2 MB | **Yes** (Python 3.11+) | ~70 ms | `python -m zipapp` — single archive, stdlib-only or vendored deps |
-| `1-after-pyinstaller/` | `app.exe` (PyInstaller) | **~9.8 MB** | **No** | ~110 ms | `pyinstaller --onefile` — bundles a stripped Python interpreter |
-| `1-after-nuitka/` | `app.exe` (Nuitka onefile) | **~8 MB** | **No** | ~50 ms | `nuitka --onefile` — actually compiles Python → C → native binary; smaller and faster than PyInstaller |
-| `1-after-pex/` | `app.pex` (PEX) | ~1 MB | **Yes** (Python 3.x) | ~80 ms | Twitter/Pants's "zipapp on steroids" — single .pex file with vendored deps |
-| `2-amalgamate/` | Nuitka onefile + LTO + every size flag | **~7 MB** | **No** | **~45 ms** | `nuitka --onefile --lto=yes --no-pyi-file --remove-output` (stacked). UPX skipped — Nuitka onefile uses self-extraction; UPX can break it. |
-| `3-best/` | PyOxidizer + memory-only modules + stripped CPython + UPX-LZMA | **~4 MB** | **No** | **~25 ms** | Switches foundation to PyOxidizer (embeds CPython in a Rust binary, loads modules from RAM — no self-extraction). Adds `optimize_level=2`, drops site/user-site/env, and applies UPX-LZMA on Linux ELF. **Trade**: PyOxidizer build is finicky vs. Nuitka; C-extension wheels need explicit handling. |
+| `0-standard-venv-deps/` | source + venv + deps (folder) | ~84 MB | **Yes** (Python 3.11+) | ~70 ms | Default `pip install -r requirements.txt` into a venv, ship the whole thing |
+| `1-optimize-zipapp/` | `app.pyz` (zipapp) | **~10 KB**–1.2 MB | **Yes** (Python 3.11+) | ~70 ms | `python -m zipapp` — single archive, stdlib-only or vendored deps |
+| `1-optimize-pyinstaller/` | `app.exe` (PyInstaller) | **~9.8 MB** | **No** | ~110 ms | `pyinstaller --onefile` — bundles a stripped Python interpreter |
+| `1-optimize-nuitka/` | `app.exe` (Nuitka onefile) | **~8 MB** | **No** | ~50 ms | `nuitka --onefile` — actually compiles Python → C → native binary; smaller and faster than PyInstaller |
+| `1-optimize-pex/` | `app.pex` (PEX) | ~1 MB | **Yes** (Python 3.x) | ~80 ms | Twitter/Pants's "zipapp on steroids" — single .pex file with vendored deps |
+| `2-amalgamate-nuitka/` | Nuitka onefile + LTO + every size flag | **~7 MB** | **No** | **~45 ms** | `nuitka --onefile --lto=yes --no-pyi-file --remove-output` (stacked). UPX skipped — Nuitka onefile uses self-extraction; UPX can break it. |
+| `3-best-pyoxidizer/` | PyOxidizer + memory-only modules + stripped CPython + UPX-LZMA | **~4 MB** | **No** | **~25 ms** | Switches foundation to PyOxidizer (embeds CPython in a Rust binary, loads modules from RAM — no self-extraction). Adds `optimize_level=2`, drops site/user-site/env, and applies UPX-LZMA on Linux ELF. **Trade**: PyOxidizer build is finicky vs. Nuitka; C-extension wheels need explicit handling. |
 
 ## Why three variants?
 
@@ -40,40 +40,40 @@ The before/after spread is dramatic: `pip install` of typical enterprise deps (r
 
 ```powershell
 # Show the typical naive deploy — venv + deps
-cd 0-before-venv-deps
+cd 0-standard-venv-deps
 ./build.ps1
 
 # zipapp (smallest artifact, needs Python)
-cd 1-after-zipapp
+cd 1-optimize-zipapp
 ./build.ps1
 
 # PyInstaller onefile (no Python needed on host)
-cd 1-after-pyinstaller
+cd 1-optimize-pyinstaller
 ./build.ps1
 
 # Nuitka onefile (Python -> C -> native, smaller + faster than PyInstaller)
-cd 1-after-nuitka
+cd 1-optimize-nuitka
 ./build.ps1
 
 # PEX (zipapp+, single .pex file)
-cd 1-after-pex
+cd 1-optimize-pex
 ./build.ps1
 
 # 2-amalgamate: Nuitka with LTO + every size flag stacked
-cd 2-amalgamate
+cd 2-amalgamate-nuitka
 ./build.ps1
 
 # 3-best: PyOxidizer + memory-only modules + UPX-LZMA (smallest possible)
-cd 3-best
+cd 3-best-pyoxidizer
 ./build.ps1   # first run installs PyOxidizer via cargo install
 ```
 
 ## Prerequisites
 
 - Python 3.11 or later (with `pip` and `venv`)
-- For `1-after-pyinstaller/`: `pip install pyinstaller`
-- For `1-after-nuitka/`: `pip install nuitka` (build script auto-installs if missing)
-- For `1-after-pex/`: `pip install pex` (build script auto-installs if missing)
+- For `1-optimize-pyinstaller/`: `pip install pyinstaller`
+- For `1-optimize-nuitka/`: `pip install nuitka` (build script auto-installs if missing)
+- For `1-optimize-pex/`: `pip install pex` (build script auto-installs if missing)
 
 ## Trade-offs (for the exec)
 
